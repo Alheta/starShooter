@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "raylib.h": "c",
+        "shootflags.h": "c",
+        "player.h": "c",
+        "gamescreen.h": "c",
+        "bullet.h": "c",
+        "constants.h": "c",
+        "game.h": "c",
+        "entity.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
+}

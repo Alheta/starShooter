@@ -1,0 +1,9 @@
+{
+    "sounds": {
+        "SOUND_SHOOT": 
+        [
+            "resources/sfx/player/shoot01.wav"
+        ]
+
+    }
+}

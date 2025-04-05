@@ -1,0 +1,43 @@
+{
+    "entities": {
+        "enemies": [
+            {
+                "variant": 0,
+                "health": 20,
+                "speed": 1.5,
+                "color": [255, 0, 0],
+                "sprite": "resources/gfx/enemies/asteroids/00_asteroid.png",
+                "score": 10
+            },
+            {
+                "variant": 1,
+                "health": 1,
+                "speed": 1.5,
+                "color": [255, 0, 0],
+                "sprite": "resources/gfx/enemies/asteroids/01_asteroid_explosive.png",
+                "score": 20
+            }
+        ],
+        "bullets": [
+            {
+                "variant": 0,
+                "damage": 2,
+                "speed": 5,
+                "sprite": "resources/gfx/bullets/00_bullet_normal.png"
+            },
+            {
+                "variant": 1,
+                "damage": 10,
+                "speed": 2,
+                "sprite": "resources/gfx/bullets/01_bullet_enemy.png"
+            }
+        ],
+        "powerups": [
+            {
+                "variant": 0,
+                "duration": 10,
+                "sprite": "resources/gfx/powerups/speed_boost.png"
+            }
+        ]
+    }
+}
