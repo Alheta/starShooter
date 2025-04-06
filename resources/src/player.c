@@ -1,21 +1,17 @@
 #include "player.h"
+#include "powerUp.h"
 #include "entity.h"
 #include "gameScreen.h"
 #include "constants.h"
 #include "game.h"
 #include "sfxManager.h"
+#include "callBackManager.h"
 #include "raylib.h"
 
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-
-
-static Entity player;
-
-Entity* GetPlayer() {
-    return &player;
-}
+#include <string.h>
 
 void InitPlayer() {
     Entity* player = GetPlayer();
@@ -23,11 +19,12 @@ void InitPlayer() {
     player->data.type = ENTITY_PLAYER;
 
     player->data.speed = GAME_TICKRATE;
-    player->color = WHITE;
+    player->defaultColor = WHITE;
     player->size = (Vector2){1,1};
 
     player->position = (Vector2){GetScreenWidth()/2, GetScreenHeight()/2};
 
+    player->data.toPlayer.maxFireDelay = NORMAL_FIREDELAY;
     player->data.toPlayer.fireDelay = 0;
     player->data.toPlayer.overheat = 0;
     player->data.toPlayer.score = 0;
@@ -36,7 +33,20 @@ void InitPlayer() {
     player->data.toPlayer.iFrames = 0;
     player->data.collisionRadius = 30;
 
+    memset(player->data.toPlayer.powerUps, 0, sizeof(player->data.toPlayer.powerUps));
+
     GetGameEntities()[0] = player;
+}
+
+void DeHeat(float amount) {
+    Entity* player = GetPlayer();
+    if ((player->data.toPlayer.overheat - amount) < 0){
+        player->data.toPlayer.overheat = 0;
+    }
+    else
+    {
+        player->data.toPlayer.overheat-=amount;
+    }
 }
 
 void UpdatePlayer() {
@@ -75,11 +85,22 @@ void UpdatePlayer() {
     {
         if (player->data.toPlayer.overheat > 0)
         {
-            player->data.toPlayer.overheat-=0.2f;
+            DeHeat(0.2f);
             if (player->data.toPlayer.overheat <= 0)
             {
                 ClearShootFlag(SHOOT_OVERHEAT);
             }
+        }
+    }
+
+    UpdatePowerUps();
+
+    if (HasShootFlag(SHOOT_COOLING))
+    {
+        DeHeat(2.0f);
+        if (HasShootFlag(SHOOT_OVERHEAT))
+        {
+            ClearShootFlag(SHOOT_OVERHEAT);
         }
     }
 
@@ -92,7 +113,7 @@ void UpdatePlayer() {
         pos.y = player->position.y + 20;
 
         Entity* particle = SpawnEntity(ENTITY_PARTICLE, 2, pos, (Vector2){cosf(angle), sinf(angle)});
-        particle->color = ORANGE;
+        particle->defaultColor = ORANGE;
     }
     if (player->data.toPlayer.iFrames > 0) player->data.toPlayer.iFrames--;
     if (player->data.toPlayer.fireDelay > 0) player->data.toPlayer.fireDelay--;
@@ -118,18 +139,22 @@ void Shoot()
 
         }
 
-        if (HasShootFlag(SHOOT_OVERHEAT)) player->data.toPlayer.fireDelay = 15;
-        else player->data.toPlayer.fireDelay = 5;
+        if (HasShootFlag(SHOOT_OVERHEAT)) player->data.toPlayer.fireDelay = player->data.toPlayer.maxFireDelay*3;
+        else player->data.toPlayer.fireDelay = player->data.toPlayer.maxFireDelay;
 
-        if (!HasShootFlag(SHOOT_OVERHEAT) && player->data.toPlayer.overheat<MAX_OVERHEAT)
+        if (!HasShootFlag(SHOOT_COOLING))
         {
-            player->data.toPlayer.overheat+=1;
-
-            if (player->data.toPlayer.overheat>=MAX_OVERHEAT)
+            if (!HasShootFlag(SHOOT_OVERHEAT) && player->data.toPlayer.overheat<MAX_OVERHEAT)
             {
-                AddShootFlag(SHOOT_OVERHEAT);
+                player->data.toPlayer.overheat+=1;
+
+                if (player->data.toPlayer.overheat>=MAX_OVERHEAT)
+                {
+                    AddShootFlag(SHOOT_OVERHEAT);
+                }
             }
         }
+
         for (int i = 0; i < 3; i++)
         {
             if (bullets[i] == NULL) continue;
@@ -142,8 +167,49 @@ void Shoot()
 
             if (HasShootFlag(SHOOT_OVERHEAT))
             {
-                b->data.damage = NORMAL_BULLET_DMG / 2;
                 b->size = (Vector2){0.5f, 0.5f};
+            }
+        }
+    }
+}
+
+void AddPowerUps(ShootFlags flag, int duration) {
+    Entity* player = GetPlayer();
+    for (int i = 0; i < MAX_ACTIVE_POWERUPS; i++) {
+        ActivePowerUp* pu = &player->data.toPlayer.powerUps[i];
+
+        if (pu->flag == flag) {
+            pu->duration = duration;
+            return;
+        }
+
+        if (pu->duration <= 0) {
+            pu->flag = flag;
+            pu->duration = duration;
+
+            CallCallbacks(POST_POWER_UP_PICKUP, (void*)(intptr_t)flag);
+
+            player->data.toPlayer.shootFlags |= flag;
+            return;
+        }
+    }
+}
+
+void UpdatePowerUps() {
+    Entity* player = GetPlayer();
+    for (int i = 0; i < MAX_ACTIVE_POWERUPS; i++) {
+        ActivePowerUp* pu = &player->data.toPlayer.powerUps[i];
+
+        if (pu->duration > 0) {
+            pu->duration--;
+
+            if (pu->duration <= 0) {
+                // Снять флаг
+                player->data.toPlayer.shootFlags &= ~pu->flag;
+
+                CallCallbacks(POST_POWER_UP_REMOVE, (void*)(intptr_t)pu->flag);
+
+                pu->flag = 0;
             }
         }
     }

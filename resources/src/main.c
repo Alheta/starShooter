@@ -1,6 +1,6 @@
 #include "raylib.h"
-#include "player.h"
 #include "entity.h"
+#include "player.h"
 #include "game.h"
 #include "constants.h"
 #include "gameScreen.h"
@@ -49,7 +49,6 @@ int main() {
 	while(!WindowShouldClose()) {
 		BeginDrawing();
 		ClearBackground(DARKGRAY);
-		UpdateGame();
 
         AdjustCamera();
 
@@ -59,6 +58,7 @@ int main() {
 		{
 		case SCREEN_GAME:
 			DrawGameplay(camera);
+			UpdateGame();
 			break;
 		case SCREEN_MENU:
 			DrawMenu();

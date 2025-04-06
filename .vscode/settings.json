@@ -8,7 +8,9 @@
         "constants.h": "c",
         "game.h": "c",
         "entity.h": "c",
-        "dataloader.h": "c"
+        "dataloader.h": "c",
+        "powerup.h": "c",
+        "raymath.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

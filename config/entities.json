@@ -12,8 +12,9 @@
             "speed": 1.5,
             "damage": 5,
             "collisionRadius": 40,
-            "score": 10,
-            "weight": 1
+            "score": 5,
+            "weight": 1,
+            "threshold": 0
         },
         {
             "type": "ENEMY",
@@ -26,8 +27,23 @@
             "speed": 1.5,
             "damage": 10,
             "collisionRadius": 50,
-            "score": 20,
-            "weight": 0.15
+            "score": 10,
+            "weight": 0.15,
+            "threshold": 100
+        },
+        {
+            "type": "ENEMY",
+            "variant": 2,
+            "sprite": [
+                "resources/gfx/enemies/asteroids/asteroid_powered_00.png"
+            ],
+            "health": 80,
+            "speed": 0.75,
+            "damage": 10,
+            "collisionRadius": 90,
+            "score": 50,
+            "weight": 0.05,
+            "threshold": 300
         },
         {
             "type": "BULLET",
@@ -53,10 +69,41 @@
             "type": "POWER_UP",
             "variant": 0,
             "sprite": [
-                "resources/gfx/powerups/speed_boost.png"
+                "resources/gfx/power ups/speed_boost_00.png"
             ],
-            "duration": 10,
-            "collisionRadius": 10
+            "duration": 200,
+            "collisionRadius": 30,
+            "assignedFlag": "SHOOT_SPEED"
+        },
+        {
+            "type": "POWER_UP",
+            "variant": 1,
+            "sprite": [
+                "resources/gfx/power ups/triple_shot_00.png"
+            ],
+            "duration": 100,
+            "collisionRadius": 30,
+            "assignedFlag": "SHOOT_TRIPLE_SHOT"
+        },
+        {
+            "type": "POWER_UP",
+            "variant": 2,
+            "sprite": [
+                "resources/gfx/power ups/homing_00.png"
+            ],
+            "duration": 150,
+            "collisionRadius": 30,
+            "assignedFlag": "SHOOT_HOMING"
+        },
+        {
+            "type": "POWER_UP",
+            "variant": 3,
+            "sprite": [
+                "resources/gfx/power ups/cooling_00.png"
+            ],
+            "duration": 400,
+            "collisionRadius": 30,
+            "assignedFlag": "SHOOT_COOLING"
         },
         {
             "type": "PARTICLE",

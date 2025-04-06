@@ -4,7 +4,8 @@
 typedef enum {
     POST_ENEMY_DEATH,
     POST_PLAYER_DAMAGE,
-    POST_ITEM_PICKUP
+    POST_POWER_UP_PICKUP,
+    POST_POWER_UP_REMOVE,
 } CallbackType;
 
 typedef struct {

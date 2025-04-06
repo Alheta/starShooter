@@ -3,6 +3,7 @@
 #include "callBackManager.h"
 
 #include "entity.h"
+#include "player.h"
 
 // Массив для хранения зарегистрированных коллбэков
 static CallbackEntry callbacks[MAX_CALLBACKS];
@@ -25,8 +26,6 @@ void CallCallbacks(CallbackType type, void* data) {
         if (callbacks[i].type != type) {
             continue;
         }
-        printf("INFO: FILTER ID: %i\n", callbacks[i].filter_data);
-        printf("%i\n", entity->data.variant);
 
         bool shouldSkip = false;
         switch (callbacks[i].type)
@@ -39,7 +38,26 @@ void CallCallbacks(CallbackType type, void* data) {
                     continue;
                 }
                 break;
+            case POST_POWER_UP_PICKUP: {
+                ShootFlags passedFlag = (ShootFlags)(intptr_t)data;
+                ShootFlags expectedFlag = (ShootFlags)(intptr_t)callbacks[i].filter_data;
 
+                if ((passedFlag & expectedFlag) == 0) {
+                    shouldSkip = true;
+                    continue;
+                }
+                break;
+            }
+            case POST_POWER_UP_REMOVE: {
+                ShootFlags passedFlag = (ShootFlags)(intptr_t)data;
+                ShootFlags expectedFlag = (ShootFlags)(intptr_t)callbacks[i].filter_data;
+
+                if ((passedFlag & expectedFlag) == 0) {
+                    shouldSkip = true;
+                    continue;
+                }
+                break;
+            }
             default:
                 break;
         }
@@ -54,4 +72,16 @@ void RegisterAllCallbacks() {
     //Коллбэк для отслеживания смерти врагов
     AddCallback(POST_ENEMY_DEATH, OnAsteroidKill, (void* ) 0);
     AddCallback(POST_ENEMY_DEATH, OnExplosiveAsteroidKill, (void* ) 1);
+    AddCallback(POST_ENEMY_DEATH, OnPoweredAsteroidKill, (void* ) 2);
+
+    AddCallback(POST_POWER_UP_PICKUP, OnSpeedBoostApply, (void*)(intptr_t)SHOOT_SPEED);
+    AddCallback(POST_POWER_UP_PICKUP, OnTripleApply, (void* )(intptr_t)SHOOT_TRIPLE_SHOT);
+    AddCallback(POST_POWER_UP_PICKUP, OnCoolingApply, (void*)(intptr_t)SHOOT_COOLING);
+    AddCallback(POST_POWER_UP_PICKUP, OnHomingApply, (void* )(intptr_t)SHOOT_HOMING);
+
+    AddCallback(POST_POWER_UP_REMOVE, OnSpeedBoostRemove, (void*)(intptr_t)SHOOT_SPEED);
+    AddCallback(POST_POWER_UP_REMOVE, OnTripleRemove, (void* )(intptr_t)SHOOT_TRIPLE_SHOT);
+    AddCallback(POST_POWER_UP_REMOVE, OnCoolingRemove, (void*)(intptr_t)SHOOT_COOLING);
+    AddCallback(POST_POWER_UP_REMOVE, OnHomingRemove, (void* )(intptr_t)SHOOT_HOMING);
+
 }

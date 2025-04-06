@@ -1,6 +1,7 @@
 #include "entity.h"
 #include "game.h"
 #include "player.h"
+#include "powerup.h"
 #include "gameScreen.h"
 #include "constants.h"
 #include "raymath.h"
@@ -9,6 +10,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+
+static Entity player;
+
+Entity* GetPlayer() {
+    return &player;
+}
+
 
 void EntityUpdate()
 {
@@ -28,6 +36,9 @@ void EntityUpdate()
                 case ENTITY_ENEMY:
                     EnemyUpdate(entity);
                     break;
+                case ENTITY_POWERUP:
+                    PowerUpUpdate(entity);
+                    break;
                 case ENTITY_PARTICLE:
                     ParticleUpdate(entity);
                     break;
@@ -42,6 +53,26 @@ void EntityUpdate()
                 if (entity->data.type != ENTITY_PLAYER) KillEntity(entity);
             }
 
+            if (entity->flashTimer>0) {
+                entity->color = RED;
+                entity->flashTimer--;
+            }
+            else
+            {
+                entity->color = entity->defaultColor;
+            }
+
+            if (entity->shakeTimer>0)
+            {
+                entity->shakePos.x += (GetRandomValue(-3, 3)); // Случайное смещение по X
+                entity->shakePos.y += (GetRandomValue(-3, 3)); // Случайное смещение по Y
+                entity->shakeTimer--;
+            }
+            else
+            {
+                entity->shakePos = (Vector2){0,0};
+            }
+
             entity->rec.width = SPRITE_SCALE * (entity->size.x*12);
             entity->rec.height = SPRITE_SCALE * (entity->size.y*12);
 
@@ -54,22 +85,29 @@ void EntityUpdate()
     }
 }
 
+bool Collides(Entity* ent1, Entity* ent2)
+{
+    return (CheckCollisionCircles(ent1->position, ent1->data.collisionRadius, ent2->position, ent2->data.collisionRadius));
+}
+
 void TakeDamage(Entity* entity, int damage) {
 
+    entity->shakeTimer = 10;
+    entity->flashTimer = 3;
     switch (entity->data.type)
     {
-    case ENTITY_PLAYER:
-        if (entity->data.toPlayer.iFrames <= 0)
-        {
-            ShakeScreen(0.15, 15);
+        case ENTITY_PLAYER:
+            if (entity->data.toPlayer.iFrames <= 0)
+            {
+                ShakeScreen(0.15, 15);
+                entity->data.maxHealth -= damage;
+                entity->data.toPlayer.iFrames = 60;
+                SFXPlay(PLAYER_DAMAGE, 1, 1, 0);
+            }
+            break;
+        default:
             entity->data.maxHealth -= damage;
-            entity->data.toPlayer.iFrames = 60;
-            SFXPlay(PLAYER_DAMAGE, 1, 1, 0);
-        }
-        break;
-    default:
-        entity->data.maxHealth -= damage;
-        break;
+            break;
     }
 
     if (entity->data.maxHealth <= 0) {
@@ -89,9 +127,9 @@ void BulletUpdate(Entity* bullet)
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* entity = GetGameEntities()[i];
         if (entity != NULL) {
-            if (entity->data.type != ENTITY_BULLET && entity->data.type != ENTITY_PARTICLE)
+            if (entity->data.type != ENTITY_BULLET && entity->data.type != ENTITY_PARTICLE && entity->data.type !=ENTITY_POWERUP)
             {
-                if (CheckCollisionCircles(entity->position, entity->data.collisionRadius, bullet->position, bullet->data.collisionRadius) &&
+                if (Collides(entity, bullet) &&
                     !IsInsideZone(entity->rec, SPAWNER_ZONE))
                 {
                     if ((bullet->data.variant == 0 && entity->data.type == ENTITY_ENEMY) ||
@@ -126,6 +164,27 @@ void BulletUpdate(Entity* bullet)
     }
 }
 
+void PowerUpUpdate(Entity* powerUp)
+{
+    if (powerUp->frameCount == 0) {
+        powerUp->data.toPowerUp.timeOut = 300;
+    }
+
+    if (powerUp->data.toPowerUp.timeOut > 0) {
+        powerUp->data.toPowerUp.timeOut--;
+    }
+    else {
+        KillEntity(powerUp);
+    }
+
+    Entity* player = GetPlayer();
+
+    if (Collides(powerUp, player)) {
+        ShootFlags flag = powerUp->data.toPowerUp.assignedFlag;
+        AddPowerUps(flag, 600);
+        KillEntity(powerUp);
+    }
+}
 
 void EnemyUpdate(Entity* enemy)
 {
@@ -148,9 +207,8 @@ void ParticleUpdate(Entity* particle)
         particle->data.toParticle.timeOut--;
         if (particle->data.toParticle.timeOut < 50)
         {
-
             float alpha = particle->data.toParticle.timeOut/ 50.0f;
-            particle->color.a = (unsigned char)(255 * alpha);
+            particle->defaultColor.a = (unsigned char)(255 * alpha);
         }
     }
     else
@@ -161,7 +219,7 @@ void ParticleUpdate(Entity* particle)
 
 bool IsAsteroid(Entity* enemy)
 {
-    return (enemy->data.type == ENTITY_ENEMY && (enemy->data.variant == 0 || enemy->data.variant == 1 || enemy->data.variant == 1));
+    return (enemy->data.type == ENTITY_ENEMY && (enemy->data.variant == 0 || enemy->data.variant == 1 || enemy->data.variant == 2));
 }
 
 void OnEnemyKill(void* data)
@@ -183,7 +241,7 @@ void OnAsteroidKill(void* data)
     }
 
     SFXPlay(ENEMY_DEATH, 1, 1, 0);
-    ShakeScreen(0.05, 10);
+    ShakeScreen(0.05, 2);
 }
 
 void OnExplosiveAsteroidKill(void* data)
@@ -208,7 +266,15 @@ void OnExplosiveAsteroidKill(void* data)
     }
 
     SFXPlay(ENEMY_DEATH_BIG, 1, 1, 0);
-    ShakeScreen(0.5, 10);
+    ShakeScreen(0.5, 5);
+}
+
+void OnPoweredAsteroidKill(void* data)
+{
+    Entity* enemy = (Entity*)data;
+
+    Entity* powerUp = SpawnEntity(ENTITY_POWERUP, rand() % 4, enemy->position, (Vector2){0,0.15});
+    ShakeScreen(0.95, 7);
 }
 
 void DrawEntities() {
@@ -224,7 +290,7 @@ void DrawEntities() {
                                        entity->data.sprite[entity->randomSpriteIndex].width * 1,
                                        entity->data.sprite[entity->randomSpriteIndex].height * 1 };
 
-                    Vector2 origin = { dest.width / 2, dest.height / 2 };
+                    Vector2 origin = { dest.width / 2 + entity->shakePos.x, dest.height / 2 + entity->shakePos.y};
 
                     DrawTexturePro(entity->data.sprite[entity->randomSpriteIndex], source, dest, origin, entity->spriteRotation, entity->color);
                 }

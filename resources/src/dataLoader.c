@@ -2,6 +2,7 @@
 #include "dataLoader.h"
 #include "raylib.h"
 
+
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,20 @@ const char* soundIdNames[] = {
     "PLAYER_DAMAGE",
     "ENEMY_DEATH",
     "ENEMY_DEATH_BIG"
+};
+
+
+typedef struct {
+    const char* name;
+    ShootFlags flag;
+} FlagEntry;
+
+FlagEntry flagMap[] = {
+    {"SHOOT_OVERHEAT", SHOOT_OVERHEAT},
+    {"SHOOT_TRIPLE_SHOT", SHOOT_TRIPLE_SHOT},
+    {"SHOOT_HOMING", SHOOT_HOMING},
+    {"SHOOT_COOLING", SHOOT_COOLING},
+    {"SHOOT_SPEED", SHOOT_SPEED}
 };
 
 
@@ -80,10 +95,23 @@ void LoadDataFromJson(const char *filename) {
             if (entityData.type == ENTITY_ENEMY) {
                 entityData.toEnemy.score = cJSON_GetObjectItem(entity, "score") ? cJSON_GetObjectItem(entity, "score")->valueint : 0;
                 entityData.toEnemy.weight = cJSON_GetObjectItem(entity, "weight") ? cJSON_GetObjectItem(entity, "weight")->valuedouble : 0;
+                entityData.toEnemy.scoreThreshold = cJSON_GetObjectItem(entity, "threshold") ? cJSON_GetObjectItem(entity, "threshold")->valueint : 0;
             } else if (entityData.type == ENTITY_BULLET) {
                 entityData.toBullet.homingRadius = cJSON_GetObjectItem(entity, "homingRadius") ? cJSON_GetObjectItem(entity, "homingRadius")->valueint : 0;
             } else if (entityData.type == ENTITY_POWERUP) {
                 entityData.toPowerUp.duration = cJSON_GetObjectItem(entity, "duration") ? cJSON_GetObjectItem(entity, "duration")->valuedouble : 0;
+                cJSON* assignedFlagItem = cJSON_GetObjectItem(entity, "assignedFlag");
+
+                if (assignedFlagItem)
+                {
+                    const char* flagName = assignedFlagItem->valuestring;
+                    for (int i = 0; i < sizeof(flagMap) / sizeof(flagMap[0]); i++) {
+                        if (strcmp(flagMap[i].name, flagName) == 0) {
+                            entityData.toPowerUp.assignedFlag = flagMap[i].flag;
+                        }
+                    }
+                }
+
             } else if (entityData.type == ENTITY_PARTICLE) {
                 entityData.toParticle.timeOut = cJSON_GetObjectItem(entity, "timeout") ? cJSON_GetObjectItem(entity, "timeout")->valuedouble : 0;
 

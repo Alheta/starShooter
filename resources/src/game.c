@@ -54,7 +54,7 @@ void ZoneUpdate()
                 break;
             case SPAWNER_ZONE:
                 zone->position.x = zone->baseWidth / 2 - (zone->rec.width) / 2;
-                zone->position.y = -800;
+                zone->position.y = -1100;
                 break;
             default:
                 zone->position.x = screenWidth / 2 - (zone->baseWidth * factor) / 2;
@@ -151,7 +151,8 @@ Entity* SpawnEntity(EntityType type, int variant, Vector2 position, Vector2 velo
                 }
             }
 
-            entity->color = WHITE;
+            entity->defaultColor = WHITE;
+            entity->color = entity->defaultColor;
 
             entity->randomSpriteIndex = rand() % entity->data.spriteCount;
 
@@ -229,13 +230,15 @@ void InitSpawner()
 
 // Функция для получения случайного врага из пула, используя вес
 int GetRandomEnemyFromPool() {
+    Entity* player = GetPlayer();
     Spawner* spawner = GetSpawner();
+
 
     // Общий вес всех врагов в пуле
     float totalWeight = 0;
-    for (int i = 0; i < 100; i++) { // Проходим по всему массиву сущностей
-        if (gameData.entities[i].type == ENTITY_ENEMY) { // Проверка, что это враг
-            totalWeight += gameData.entities[i].toEnemy.weight; // Добавляем вес врага
+    for (int i = 0; i < 100; i++) {
+        if (gameData.entities[i].type == ENTITY_ENEMY && player->data.toPlayer.score >= gameData.entities[i].toEnemy.scoreThreshold) {
+            totalWeight += gameData.entities[i].toEnemy.weight;
         }
     }
 
@@ -245,9 +248,15 @@ int GetRandomEnemyFromPool() {
     // Выбор врага на основе случайного веса
     for (int i = 0; i < 100; i++) { // Проходим по массиву сущностей
         if (gameData.entities[i].type == ENTITY_ENEMY) {
-            randomWeight -= gameData.entities[i].toEnemy.weight;
-            if (randomWeight <= 0) {
-                return gameData.entities[i].variant;
+            if (player->data.toPlayer.score >= gameData.entities[i].toEnemy.scoreThreshold)  {
+                randomWeight -= gameData.entities[i].toEnemy.weight;
+                if (randomWeight <= 0) {
+                    return gameData.entities[i].variant;
+                }
+            }
+            else
+            {
+                continue;;
             }
         }
     }
@@ -260,18 +269,6 @@ void SpawnerUpdate() {
     Spawner* spawner = GetSpawner();
 
     if (spawner->spawnDelay == 0) {
-        int additionalEnemyCount = player->data.toPlayer.score / 50;
-
-        if (additionalEnemyCount > spawner->spawnPoolSize) {
-            // Расширяем пул врагов, если необходимо
-            spawner->spawnPoolSize++;
-
-            // Уменьшаем задержку спавна при достижении определенного количества врагов
-            if (spawner->spawnDelay > 90) {
-                spawner->spawnDelay -= 5;
-            }
-        }
-
 
         // Получаем случайного врага из пула
         int randomEnemy = GetRandomEnemyFromPool();

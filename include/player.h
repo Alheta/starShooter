@@ -1,21 +1,18 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "entity.h"
+#include "powerUp.h"
 #include "raylib.h"
-
-typedef enum ShootFlags {
-    SHOOT_OVERHEAT = 1 << 0,
-	SHOOT_TRIPLE_SHOT =  1 << 1,
-	SHOOT_HOMING = 1 << 2
-} ShootFlags;
 
 void InitPlayer();
 void UpdatePlayer();
 void DrawUI();
 void Shoot();
-Entity* GetPlayer();
 
+void DeHeat(float amount);
+
+void AddPowerUps(ShootFlags flags, int duration);
+void UpdatePowerUps();
 
 void AddShootFlag(ShootFlags flag);
 bool HasShootFlag(ShootFlags flag);
