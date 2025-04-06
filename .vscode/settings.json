@@ -10,7 +10,8 @@
         "entity.h": "c",
         "dataloader.h": "c",
         "powerup.h": "c",
-        "raymath.h": "c"
+        "raymath.h": "c",
+        "callbackmanager.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

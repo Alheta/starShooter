@@ -5,14 +5,16 @@
 #include "constants.h"
 #include "gameScreen.h"
 #include "dataLoader.h"
+#include "decoration.h"
 #include "callBackManager.h"
+#include "debug.h"
 
 #include <stdio.h>
 
 // SCREEN PARAMETERS
 static int baseScreenWidth = SCREEN_WIDTH;
 static int baseScreenHeight = SCREEN_HEIGHT;
-static const char * screenTitle = "Star Shooter v0.5";
+static const char * screenTitle = "Star Shooter v1.0";
 
 //Function Declaration
 	//Core Game
@@ -31,13 +33,19 @@ int main() {
 	InitAudioDevice();
 	SetTargetFPS(60);
 
+	Image icon = LoadImage("config/meta/icon.png");
+    SetWindowIcon(icon);
+    UnloadImage(icon);
+
 	SetExitKey(0);
 
 	AddZone(baseScreenWidth, baseScreenHeight, GAMEPLAY_ZONE, 1);
-	AddZone(baseScreenWidth * 1.75, baseScreenHeight * 3, DELETION_ZONE, 1);
+	AddZone(baseScreenWidth * 1.75, baseScreenHeight * 3.5, DELETION_ZONE, 1);
 	AddZone(baseScreenWidth, baseScreenHeight, SPAWNER_ZONE, 1);
 
 	Camera2D* camera = InitCameraScaler();
+
+	gameData.debugFlags = 0;
 
 	LoadDataFromJson("config/entities.json");
 	LoadDataFromJson("config/sounds.json");
@@ -48,7 +56,10 @@ int main() {
 
 	while(!WindowShouldClose()) {
 		BeginDrawing();
-		ClearBackground(DARKGRAY);
+		ClearBackground((Color){ 10, 0, 20, 255 }); // тёмно-фиолетовый космический цвет
+
+		if (IsKeyPressed(KEY_F))
+			ToggleBorderlessWindowed();
 
         AdjustCamera();
 
@@ -78,34 +89,22 @@ int main() {
 //Update Game
 void UpdateGame()
 {
-	if (IsKeyPressed(KEY_B))
-	{
-		AddShootFlag(SHOOT_TRIPLE_SHOT);
-		AddShootFlag(SHOOT_HOMING);
-	}
-	if (IsKeyPressed(KEY_N))
-	{
-		ClearShootFlag(SHOOT_TRIPLE_SHOT);
-		ClearShootFlag(SHOOT_HOMING);
-	}
-
-
 	ZoneUpdate();
 	SpawnerUpdate();
+	DecorationSpawner();
+	DebugUpdate();
 
 	//Обновление сущностей
 	EntityUpdate();
-
-
-	if (IsKeyPressed(KEY_F))
-		ToggleBorderlessWindowed();
-
 }
 
 void DrawMenu() {
+	DrawText("Move:ARROWS\nShoot:Z", 10, 10, 17, WHITE);
+
+
 	char* mainMenuText = "Main Menu";
 	char* playButtonText = "Play";
-    DrawText(mainMenuText, GetScreenWidth()/2-MeasureText(mainMenuText, 30)/2, GetScreenHeight()/2-50, 30, BLACK);
+    DrawText(mainMenuText, GetScreenWidth()/2-MeasureText(mainMenuText, 30)/2, GetScreenHeight()/2-50, 30, WHITE);
 
 	Rectangle playButton = {GetScreenWidth()/2-100, GetScreenHeight()/2+150, 200, 50 };
 
@@ -113,7 +112,7 @@ void DrawMenu() {
     DrawText(playButtonText, playButton.x + 75, playButton.y + 15, 20, WHITE);
 
     if (CheckCollisionPointRec(GetMousePosition(), playButton)) {
-        DrawRectangleLines(playButton.x, playButton.y, playButton.width, playButton.height, BLACK);
+        DrawRectangleLines(playButton.x, playButton.y, playButton.width, playButton.height, WHITE);
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 			ChangeScreen(SCREEN_GAME);
 			RestartGame();
@@ -129,9 +128,6 @@ void DrawGameplay(Camera2D* camera)
 	DrawZones();
 	DrawEntities();
 
-	DrawText("Move:ARROWS\nShoot:Z\nToggle ON/OFF tripple shot: B/N", 10, 10, 17, BLACK);
-	//--
-
 	EndMode2D();
 
 	DrawUI();
@@ -142,7 +138,7 @@ void DrawGameover() {
 	char* menuButtonText = "Main Menu";
 	char* retryButtonText = "Retry";
 
-    DrawText(menuText, GetScreenWidth()/2-MeasureText(menuText, 30)/2, GetScreenHeight()/2-50, 30, BLACK);
+    DrawText(menuText, GetScreenWidth()/2-MeasureText(menuText, 30)/2, GetScreenHeight()/2-50, 30, WHITE);
 
 	Rectangle menuButton = {GetScreenWidth()/2-100, GetScreenHeight()/2+150, 200, 50 };
 
@@ -155,13 +151,13 @@ void DrawGameover() {
     DrawText(retryButtonText, retryButton.x + 75, retryButton.y + 15, 20, WHITE);
 
     if (CheckCollisionPointRec(GetMousePosition(), menuButton)) {
-        DrawRectangleLines(menuButton.x, menuButton.y, menuButton.width, menuButton.height, BLACK);
+        DrawRectangleLines(menuButton.x, menuButton.y, menuButton.width, menuButton.height, WHITE);
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 			ChangeScreen(SCREEN_MENU);
 		}
     }
 	else if (CheckCollisionPointRec(GetMousePosition(), retryButton)) {
-        DrawRectangleLines(retryButton.x, retryButton.y, retryButton.width, retryButton.height, BLACK);
+        DrawRectangleLines(retryButton.x, retryButton.y, retryButton.width, retryButton.height, WHITE);
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
 			ChangeScreen(SCREEN_GAME);
 			RestartGame();

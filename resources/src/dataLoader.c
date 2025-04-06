@@ -16,7 +16,6 @@ const char* soundIdNames[] = {
     "ENEMY_DEATH_BIG"
 };
 
-
 typedef struct {
     const char* name;
     ShootFlags flag;
@@ -74,6 +73,8 @@ void LoadDataFromJson(const char *filename) {
                 entityData.type = ENTITY_POWERUP;
             } else if (strcmp(typeStr, "PARTICLE") == 0) {
                 entityData.type = ENTITY_PARTICLE;
+            } else if (strcmp(typeStr, "DECORATION") == 0) {
+                entityData.type = ENTITY_DECORATION;
             }
 
 
@@ -111,10 +112,10 @@ void LoadDataFromJson(const char *filename) {
                         }
                     }
                 }
-
             } else if (entityData.type == ENTITY_PARTICLE) {
                 entityData.toParticle.timeOut = cJSON_GetObjectItem(entity, "timeout") ? cJSON_GetObjectItem(entity, "timeout")->valuedouble : 0;
-
+            } else if (entityData.type == ENTITY_DECORATION) {
+                entityData.toDecoration.weight = cJSON_GetObjectItem(entity, "weight") ? cJSON_GetObjectItem(entity, "weight")->valuedouble : 0;
             }
 
             gameData.entities[i] = entityData;

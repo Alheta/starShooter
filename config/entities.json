@@ -40,7 +40,7 @@
             "health": 80,
             "speed": 0.75,
             "damage": 10,
-            "collisionRadius": 90,
+            "collisionRadius": 70,
             "score": 50,
             "weight": 0.05,
             "threshold": 300
@@ -137,6 +137,37 @@
             ],
             "timeout": 60,
             "speed": 0.15
+        },
+
+
+        {
+            "type": "DECORATION",
+            "variant": 0,
+            "sprite": [
+                "resources/gfx/decoration/star_00.png",
+                "resources/gfx/decoration/star_01.png",
+                "resources/gfx/decoration/star_02.png",
+                "resources/gfx/decoration/star_03.png"
+            ],
+            "weight": 1.0
+        },
+        {
+            "type": "DECORATION",
+            "variant": 1,
+            "sprite": [
+                "resources/gfx/decoration/planet_00.png",
+                "resources/gfx/decoration/planet_01.png",
+                "resources/gfx/decoration/planet_02.png"
+            ],
+            "weight": 1.0
+        },
+        {
+            "type": "DECORATION",
+            "variant": 2,
+            "sprite": [
+                "resources/gfx/decoration/giant_00.png"
+            ],
+            "weight": 1.0
         }
     ]
 }

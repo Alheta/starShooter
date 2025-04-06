@@ -7,6 +7,7 @@
 #include "raymath.h"
 #include "callBackManager.h"
 #include "sfxManager.h"
+#include "debug.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,11 @@ bool Collides(Entity* ent1, Entity* ent2)
     return (CheckCollisionCircles(ent1->position, ent1->data.collisionRadius, ent2->position, ent2->data.collisionRadius));
 }
 
+bool IsVulnerableEntity(Entity* entity)
+{
+    return (entity->data.maxHealth > 0 || entity->data.type == ENTITY_ENEMY || entity->data.type == ENTITY_PLAYER);
+}
+
 void TakeDamage(Entity* entity, int damage) {
 
     entity->shakeTimer = 10;
@@ -127,7 +133,7 @@ void BulletUpdate(Entity* bullet)
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* entity = GetGameEntities()[i];
         if (entity != NULL) {
-            if (entity->data.type != ENTITY_BULLET && entity->data.type != ENTITY_PARTICLE && entity->data.type !=ENTITY_POWERUP)
+            if (IsVulnerableEntity(entity))
             {
                 if (Collides(entity, bullet) &&
                     !IsInsideZone(entity->rec, SPAWNER_ZONE))
@@ -278,17 +284,38 @@ void OnPoweredAsteroidKill(void* data)
 }
 
 void DrawEntities() {
+    Entity* sorted[MAX_ENTITIES];
+    int count = 0;
+
     for (int i = 0; i < MAX_ENTITIES; i++) {
-        Entity* entity = GetGameEntities()[i];
+        Entity* e = GetGameEntities()[i];
+        if (e != NULL) {
+            sorted[count++] = e;
+        }
+    }
+
+    int CompareByZIndex(const void* a, const void* b) {
+        const Entity* ea = *(const Entity**)a;
+        const Entity* eb = *(const Entity**)b;
+        return ea->zIndex - eb->zIndex;
+    }
+
+    qsort(sorted, count, sizeof(Entity*), CompareByZIndex);
+
+    for (int i = 0; i < count; i++) {
+        Entity* entity = sorted[i];
         if (entity != NULL) {
             if (entity->data.type != ENTITY_PLAYER)
             {
                 if (entity->data.sprite[entity->randomSpriteIndex].id > 0)
                 {
                     Rectangle source = { 0, 0, entity->data.sprite[entity->randomSpriteIndex].width, entity->data.sprite[entity->randomSpriteIndex].height };
-                    Rectangle dest = { entity->position.x, entity->position.y,
-                                       entity->data.sprite[entity->randomSpriteIndex].width * 1,
-                                       entity->data.sprite[entity->randomSpriteIndex].height * 1 };
+                    Rectangle dest = {
+                        entity->position.x,
+                        entity->position.y,
+                        entity->data.sprite[entity->randomSpriteIndex].width * entity->size.x,
+                        entity->data.sprite[entity->randomSpriteIndex].height * entity->size.y
+                    };
 
                     Vector2 origin = { dest.width / 2 + entity->shakePos.x, dest.height / 2 + entity->shakePos.y};
 
@@ -312,9 +339,13 @@ void DrawEntities() {
                     DrawRectangleRec(entity->rec, entity->color);
                 }
             }
-            DrawCircleLines(entity->position.x + entity->size.x/2,
-                entity->position.y+entity->size.y/2,
-                entity->data.collisionRadius, YELLOW);
+
+            if (HasDebugFlag(DEBUG_SHOW_HITBOXES))
+            {
+                DrawCircleLines(entity->position.x + entity->size.x/2,
+                    entity->position.y+entity->size.y/2,
+                    entity->data.collisionRadius, YELLOW);
+            }
         }
     }
 }

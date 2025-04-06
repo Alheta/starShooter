@@ -33,6 +33,8 @@ void InitPlayer() {
     player->data.toPlayer.iFrames = 0;
     player->data.collisionRadius = 30;
 
+    player->zIndex = 10;
+
     memset(player->data.toPlayer.powerUps, 0, sizeof(player->data.toPlayer.powerUps));
 
     GetGameEntities()[0] = player;
@@ -114,6 +116,7 @@ void UpdatePlayer() {
 
         Entity* particle = SpawnEntity(ENTITY_PARTICLE, 2, pos, (Vector2){cosf(angle), sinf(angle)});
         particle->defaultColor = ORANGE;
+        particle->zIndex = 15;
     }
     if (player->data.toPlayer.iFrames > 0) player->data.toPlayer.iFrames--;
     if (player->data.toPlayer.fireDelay > 0) player->data.toPlayer.fireDelay--;
@@ -163,11 +166,6 @@ void Shoot()
             if (HasShootFlag(SHOOT_HOMING))
             {
                 b->data.toBullet.homingRadius = 350;
-            }
-
-            if (HasShootFlag(SHOOT_OVERHEAT))
-            {
-                b->size = (Vector2){0.5f, 0.5f};
             }
         }
     }
@@ -228,12 +226,12 @@ void DrawUI() {
 
     Vector2 textPosition = { (GetScreenWidth() - textSize.x) / 2, 10 };
 
-    DrawText(scoreText, textPosition.x, textPosition.y, 55 * GetScaleFactor(), BLACK);
+    DrawText(scoreText, textPosition.x, textPosition.y, 55 * GetScaleFactor(), WHITE);
 
     //Перегрев
     Color clr;
     if (HasShootFlag(SHOOT_OVERHEAT)) clr = RED;
-    else clr = BLACK;
+    else clr = WHITE;
     DrawText(TextFormat("%.2f", player->data.toPlayer.overheat), 25, screenHeight - 150, 55, clr);
 
     DrawText(TextFormat("%.0f", player->data.maxHealth), 50, screenHeight - 70, 55, clr);

@@ -10,6 +10,7 @@ typedef enum EntityType {
     ENTITY_BULLET,
     ENTITY_POWERUP,
     ENTITY_PARTICLE,
+    ENTITY_DECORATION,
 } EntityType;
 
 //Данные сущностей
@@ -62,6 +63,12 @@ typedef struct EntityData {
         struct {
             float timeOut;
         } toParticle;
+
+        // Для декора
+        struct {
+            float weight;
+        } toDecoration;
+
     };
 } EntityData;
 
@@ -76,6 +83,8 @@ typedef struct Entity {
     Rectangle rec;
     Vector2 size;
 
+    int zIndex;
+
     float spriteRotation;
     float spriteRotationSpeed;
     int randomSpriteIndex;
@@ -89,6 +98,7 @@ typedef struct Entity {
 
 Entity* GetPlayer();
 
+
 void EntityUpdate();
 void TakeDamage(Entity* entity, int damage);
 void BulletUpdate(Entity* bullet);
@@ -97,7 +107,7 @@ void EnemyUpdate(Entity* enemy);
 void ParticleUpdate(Entity* particle);
 
 bool Collides(Entity* entity1, Entity* entity2);
-
+bool IsVulnerableEntity(Entity* entity);
 bool IsAsteroid(Entity* entity);
 
 //Функции для коллбэков

@@ -5,6 +5,7 @@
 #include "constants.h"
 #include "raymath.h"
 #include "dataLoader.h"
+#include "debug.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -76,13 +77,16 @@ void DrawZones() {
             default: color = GRAY; break;
         }
 
-        DrawRectangleLines(
-            zone->rec.x,
-            zone->rec.y,
-            zone->rec.width,
-            zone->rec.height,
-            color
-        );
+        if (HasDebugFlag(DEBUG_SHOW_HITBOXES))
+        {
+            DrawRectangleLines(
+                zone->rec.x,
+                zone->rec.y,
+                zone->rec.width,
+                zone->rec.height,
+                color
+            );
+        }
     }
 }
 
