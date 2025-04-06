@@ -5,8 +5,10 @@
 #include "constants.h"
 #include "raymath.h"
 #include "callBackManager.h"
+#include "sfxManager.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void EntityUpdate()
 {
@@ -15,24 +17,29 @@ void EntityUpdate()
 
         if (entity != NULL) {
 
-            switch (entity->type)
+            switch (entity->data.type)
             {
-                case PLAYER:
+                case ENTITY_PLAYER:
                     UpdatePlayer();
                     break;
-                case BULLET:
+                case ENTITY_BULLET:
                     BulletUpdate(entity);
                     break;
-                case ENEMY:
+                case ENTITY_ENEMY:
                     EnemyUpdate(entity);
+                    break;
+                case ENTITY_PARTICLE:
+                    ParticleUpdate(entity);
                     break;
                 default:
                     break;
             }
 
+            entity->frameCount++;
+
             if (!IsInsideZone(entity->rec, DELETION_ZONE)) {
                 //printf("INFO: Entity Deleted!\n");
-                if (entity->type != PLAYER) KillEntity(entity);
+                if (entity->data.type != ENTITY_PLAYER) KillEntity(entity);
             }
 
             entity->rec.width = SPRITE_SCALE * (entity->size.x*12);
@@ -40,33 +47,37 @@ void EntityUpdate()
 
             entity->rec.x = entity->position.x - (entity->rec.width/2);
             entity->rec.y = entity->position.y - (entity->rec.width/2);
+
+            entity->position.x += (entity->velocity.x * entity->data.speed) * GetFrameTime() * GAME_TICKRATE;
+            entity->position.y += (entity->velocity.y * entity->data.speed) * GetFrameTime() * GAME_TICKRATE;
         }
     }
 }
 
 void TakeDamage(Entity* entity, int damage) {
 
-    switch (entity->type)
+    switch (entity->data.type)
     {
-    case PLAYER:
-        if (entity->toPlayer.iFrames <= 0)
+    case ENTITY_PLAYER:
+        if (entity->data.toPlayer.iFrames <= 0)
         {
             ShakeScreen(0.15, 15);
-            entity->health -= damage;
-            entity->toPlayer.iFrames = 60;
+            entity->data.maxHealth -= damage;
+            entity->data.toPlayer.iFrames = 60;
+            SFXPlay(PLAYER_DAMAGE, 1, 1, 0);
         }
         break;
     default:
-        entity->health -= damage;
+        entity->data.maxHealth -= damage;
         break;
     }
 
-    if (entity->health <= 0) {
-        if (entity->type == ENEMY) {
-            OnEnemyKill((void*)entity);
+    if (entity->data.maxHealth <= 0) {
+        if (entity->data.type == ENTITY_ENEMY) {
             CallCallbacks(POST_ENEMY_DEATH, (void*)entity);  // Передаем entity как void*
             KillEntity(entity);
-        } else if (entity->type == PLAYER) {
+            OnEnemyKill((void*)entity);
+        } else if (entity->data.type == ENTITY_PLAYER) {
             ChangeScreen(SCREEN_GAMEOVER);
         }
     }
@@ -74,20 +85,26 @@ void TakeDamage(Entity* entity, int damage) {
 
 void BulletUpdate(Entity* bullet)
 {
-    bullet->position.x += (bullet->velocity.x * bullet->speed) * GetFrameTime() * GAME_TICKRATE;
-    bullet->position.y += (bullet->velocity.y * bullet->speed) * GetFrameTime() * GAME_TICKRATE;
 
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* entity = GetGameEntities()[i];
         if (entity != NULL) {
-            if (entity->type != BULLET)
+            if (entity->data.type != ENTITY_BULLET && entity->data.type != ENTITY_PARTICLE)
             {
-                if (CheckCollisionCircles(entity->position, entity->collisionRadius, bullet->position, bullet->collisionRadius))
+                if (CheckCollisionCircles(entity->position, entity->data.collisionRadius, bullet->position, bullet->data.collisionRadius) &&
+                    !IsInsideZone(entity->rec, SPAWNER_ZONE))
                 {
-                    if ((bullet->variant == BULLET_NORMAL && entity->type == ENEMY) ||
-                        bullet->variant == BULLET_ENEMY)
+                    if ((bullet->data.variant == 0 && entity->data.type == ENTITY_ENEMY) ||
+                        bullet->data.variant == 1)
                     {
-                        TakeDamage(entity, bullet->bullet.damage);
+                        for (int i = 0; i < (2 + rand() % 3); i++)
+                        {
+                            float angleRad = DegreeToRadian((float)(rand() % 360));
+
+                            Entity* particle = SpawnEntity(ENTITY_PARTICLE, 2, bullet->position, (Vector2){cosf(angleRad), sinf(angleRad)});
+                        }
+
+                        TakeDamage(entity, bullet->data.damage);
                         KillEntity(bullet);
                     }
                 }
@@ -95,11 +112,11 @@ void BulletUpdate(Entity* bullet)
         }
     }
 
-    if (bullet->bullet.homingRadius > 0)
+    if (bullet->data.toBullet.homingRadius > 0)
     {
-        Entity* closestEnemy = GetClosestEntity(bullet->position, bullet->bullet.homingRadius, ENEMY);
+        Entity* closestEnemy = GetClosestEntity(bullet->position, bullet->data.toBullet.homingRadius, ENTITY_ENEMY);
 
-        if (closestEnemy) {
+        if (closestEnemy && !IsInsideZone(closestEnemy->rec, SPAWNER_ZONE)) {
             Vector2 direction = Vector2Subtract(closestEnemy->position, bullet->position);
             if (Vector2LengthSqr(direction) > 0.0001f) {
                 direction = Vector2Normalize(direction);
@@ -112,9 +129,6 @@ void BulletUpdate(Entity* bullet)
 
 void EnemyUpdate(Entity* enemy)
 {
-    enemy->position.x += (enemy->velocity.x * enemy->speed) * GetFrameTime() * GAME_TICKRATE;
-    enemy->position.y += (enemy->velocity.y * enemy->speed) * GetFrameTime() * GAME_TICKRATE;
-
     if (enemy->shouldRotate)
     {
         enemy->spriteRotation += enemy->spriteRotationSpeed;
@@ -127,12 +141,49 @@ void EnemyUpdate(Entity* enemy)
     }
 }
 
+void ParticleUpdate(Entity* particle)
+{
+    if (particle->data.toParticle.timeOut > 0)
+    {
+        particle->data.toParticle.timeOut--;
+        if (particle->data.toParticle.timeOut < 50)
+        {
+
+            float alpha = particle->data.toParticle.timeOut/ 50.0f;
+            particle->color.a = (unsigned char)(255 * alpha);
+        }
+    }
+    else
+    {
+        KillEntity(particle);
+    }
+}
+
+bool IsAsteroid(Entity* enemy)
+{
+    return (enemy->data.type == ENTITY_ENEMY && (enemy->data.variant == 0 || enemy->data.variant == 1 || enemy->data.variant == 1));
+}
+
 void OnEnemyKill(void* data)
 {
     Entity* enemy = (Entity*)data;
 
     Entity* player = GetPlayer();
-    player->toPlayer.score+=enemy->enemy.score;
+    player->data.toPlayer.score +=enemy->data.toEnemy.score;
+}
+
+void OnAsteroidKill(void* data)
+{
+    Entity* enemy = (Entity*)data;
+    for (int i = 0; i < (2 + rand() % 3); i++)
+    {
+        float angleRad = DegreeToRadian((float)(rand() % 360));
+
+        Entity* particle = SpawnEntity(ENTITY_PARTICLE, 0, enemy->position, (Vector2){cosf(angleRad), sinf(angleRad)});
+    }
+
+    SFXPlay(ENEMY_DEATH, 1, 1, 0);
+    ShakeScreen(0.05, 10);
 }
 
 void OnExplosiveAsteroidKill(void* data)
@@ -146,10 +197,17 @@ void OnExplosiveAsteroidKill(void* data)
 
         float angleRad = DegreeToRadian(angle);
 
-        Entity* bullet = SpawnEntity(BULLET, BULLET_ENEMY, enemy->position, (Vector2){cosf(angleRad), sinf(angleRad)});
-        bullet->speed = 1;
+        Entity* bullet = SpawnEntity(ENTITY_BULLET, 1, enemy->position, (Vector2){cosf(angleRad), sinf(angleRad)});
     }
 
+    for (int i = 0; i < (2 + rand() % 3); i++)
+    {
+        float angleRad = DegreeToRadian((float)(rand() % 360));
+
+        Entity* particle = SpawnEntity(ENTITY_PARTICLE, 1, enemy->position, (Vector2){cosf(angleRad), sinf(angleRad)});
+    }
+
+    SFXPlay(ENEMY_DEATH_BIG, 1, 1, 0);
     ShakeScreen(0.5, 10);
 }
 
@@ -157,19 +215,18 @@ void DrawEntities() {
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* entity = GetGameEntities()[i];
         if (entity != NULL) {
-            if (entity->type != PLAYER)
+            if (entity->data.type != ENTITY_PLAYER)
             {
-                DrawCircleLines(entity->position.x+entity->size.x/2, entity->position.y+entity->size.y/2, 10, YELLOW);
-                if (entity->sprite.id > 0)
+                if (entity->data.sprite[entity->randomSpriteIndex].id > 0)
                 {
-                    Rectangle source = { 0, 0, entity->sprite.width, entity->sprite.height };
+                    Rectangle source = { 0, 0, entity->data.sprite[entity->randomSpriteIndex].width, entity->data.sprite[entity->randomSpriteIndex].height };
                     Rectangle dest = { entity->position.x, entity->position.y,
-                                       entity->sprite.width * 1,
-                                       entity->sprite.height * 1 };
+                                       entity->data.sprite[entity->randomSpriteIndex].width * 1,
+                                       entity->data.sprite[entity->randomSpriteIndex].height * 1 };
 
                     Vector2 origin = { dest.width / 2, dest.height / 2 };
 
-                    DrawTexturePro(entity->sprite, source, dest, origin, entity->spriteRotation, WHITE);
+                    DrawTexturePro(entity->data.sprite[entity->randomSpriteIndex], source, dest, origin, entity->spriteRotation, entity->color);
                 }
                 else
                 {
@@ -178,10 +235,10 @@ void DrawEntities() {
             }
             else
             {
-                if (entity->toPlayer.iFrames > 0) {
+                if (entity->data.toPlayer.iFrames > 0) {
 
-                    float blinkSpeed = 5 + (50 * (1.0f - (entity->toPlayer.iFrames / 60.0f)));
-                    if (fmod(entity->toPlayer.iFrames, blinkSpeed) < blinkSpeed / 2) {
+                    float blinkSpeed = 5 + (50 * (1.0f - (entity->data.toPlayer.iFrames / 60.0f)));
+                    if (fmod(entity->data.toPlayer.iFrames, blinkSpeed) < blinkSpeed / 2) {
                         DrawRectangleRec(entity->rec, entity->color);
                     }
                     }
@@ -189,6 +246,9 @@ void DrawEntities() {
                     DrawRectangleRec(entity->rec, entity->color);
                 }
             }
+            DrawCircleLines(entity->position.x + entity->size.x/2,
+                entity->position.y+entity->size.y/2,
+                entity->data.collisionRadius, YELLOW);
         }
     }
 }

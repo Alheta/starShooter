@@ -4,9 +4,12 @@
 #include "constants.h"
 #include "game.h"
 #include "sfxManager.h"
+#include "raylib.h"
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+
 
 static Entity player;
 
@@ -17,20 +20,21 @@ Entity* GetPlayer() {
 void InitPlayer() {
     Entity* player = GetPlayer();
 
-    player->type = PLAYER;
+    player->data.type = ENTITY_PLAYER;
 
-    player->speed = GAME_TICKRATE;
+    player->data.speed = GAME_TICKRATE;
     player->color = WHITE;
     player->size = (Vector2){1,1};
 
     player->position = (Vector2){GetScreenWidth()/2, GetScreenHeight()/2};
 
-    player->toPlayer.fireDelay = 0;
-    player->toPlayer.overheat = 0;
-    player->toPlayer.score = 0;
-    player->toPlayer.shootFlags = 0;
-    player->health = 100;
-    player->toPlayer.iFrames = 0;
+    player->data.toPlayer.fireDelay = 0;
+    player->data.toPlayer.overheat = 0;
+    player->data.toPlayer.score = 0;
+    player->data.toPlayer.shootFlags = 0;
+    player->data.maxHealth = 100;
+    player->data.toPlayer.iFrames = 0;
+    player->data.collisionRadius = 30;
 
     GetGameEntities()[0] = player;
 }
@@ -42,10 +46,10 @@ void UpdatePlayer() {
     Zone* zone = GetZoneByType(GAMEPLAY_ZONE);
 
     //Передвижение
-    if (IsKeyDown(KEY_RIGHT)) newPos.x += player->speed * GetFrameTime();
-    if (IsKeyDown(KEY_LEFT))  newPos.x -= player->speed * GetFrameTime();
-    if (IsKeyDown(KEY_UP))    newPos.y -= player->speed * GetFrameTime();
-    if (IsKeyDown(KEY_DOWN))  newPos.y += player->speed * GetFrameTime();
+    if (IsKeyDown(KEY_RIGHT)) newPos.x += player->data.speed * GetFrameTime();
+    if (IsKeyDown(KEY_LEFT))  newPos.x -= player->data.speed * GetFrameTime();
+    if (IsKeyDown(KEY_UP))    newPos.y -= player->data.speed * GetFrameTime();
+    if (IsKeyDown(KEY_DOWN))  newPos.y += player->data.speed * GetFrameTime();
 
     //Ограничение движение зоной
     if (newPos.x < zone->rec.x) newPos.x = zone->rec.x;
@@ -65,51 +69,63 @@ void UpdatePlayer() {
     {
         Shoot();
     }
-    else player->toPlayer.isShooting = false;
+    else player->data.toPlayer.isShooting = false;
 
-    if (!player->toPlayer.isShooting || HasShootFlag(SHOOT_OVERHEAT))
+    if (!player->data.toPlayer.isShooting || HasShootFlag(SHOOT_OVERHEAT))
     {
-        if (player->toPlayer.overheat > 0)
+        if (player->data.toPlayer.overheat > 0)
         {
-            player->toPlayer.overheat-=0.2f;
-            if (player->toPlayer.overheat <= 0)
+            player->data.toPlayer.overheat-=0.2f;
+            if (player->data.toPlayer.overheat <= 0)
             {
                 ClearShootFlag(SHOOT_OVERHEAT);
             }
         }
     }
 
-    if (player->toPlayer.iFrames > 0) player->toPlayer.iFrames--;
-    if (player->toPlayer.fireDelay > 0) player->toPlayer.fireDelay--;
+    if (player->frameCount % 3 == 0)
+    {
+        float angle = DegreeToRadian(70 + (rand() % 41));
+
+        Vector2 pos;
+        pos.x = player->position.x;
+        pos.y = player->position.y + 20;
+
+        Entity* particle = SpawnEntity(ENTITY_PARTICLE, 2, pos, (Vector2){cosf(angle), sinf(angle)});
+        particle->color = ORANGE;
+    }
+    if (player->data.toPlayer.iFrames > 0) player->data.toPlayer.iFrames--;
+    if (player->data.toPlayer.fireDelay > 0) player->data.toPlayer.fireDelay--;
 }
 
 void Shoot()
 {
     Entity* player = GetPlayer();
 
-    if (player->toPlayer.fireDelay == 0)
+    if (player->data.toPlayer.fireDelay == 0)
     {
-        SFXPlay(SHOOT_SOUND, 0.25f, 1, 0.0f);
-        player->toPlayer.isShooting = true;
+        SpawnEntity(ENTITY_PARTICLE, 2, player->position, (Vector2){0, -1});
+        SFXPlay(SHOOT_SOUND, 0.25f, 1+ player->data.toPlayer.overheat/MAX_OVERHEAT, 0.0f);
+        player->data.toPlayer.isShooting = true;
 
         Entity* bullets[3] = {NULL, NULL, NULL};
-        bullets[0] = SpawnEntity(BULLET, BULLET_NORMAL, player->position, (Vector2){0,-1});
+        bullets[0] = SpawnEntity(ENTITY_BULLET, 0, player->position, (Vector2){0,-1});
 
         if (HasShootFlag(SHOOT_TRIPLE_SHOT))
         {
-            bullets[1] = SpawnEntity(BULLET, BULLET_NORMAL, player->position, (Vector2){0.5, -0.75});
-            bullets[2] = SpawnEntity(BULLET, BULLET_NORMAL, player->position, (Vector2){-0.5, -0.75});
+            bullets[1] = SpawnEntity(ENTITY_BULLET, 0, player->position, (Vector2){0.5, -0.75});
+            bullets[2] = SpawnEntity(ENTITY_BULLET, 0, player->position, (Vector2){-0.5, -0.75});
 
         }
 
-        if (HasShootFlag(SHOOT_OVERHEAT)) player->toPlayer.fireDelay = 15;
-        else player->toPlayer.fireDelay = 5;
+        if (HasShootFlag(SHOOT_OVERHEAT)) player->data.toPlayer.fireDelay = 15;
+        else player->data.toPlayer.fireDelay = 5;
 
-        if (!HasShootFlag(SHOOT_OVERHEAT) && player->toPlayer.overheat<MAX_OVERHEAT)
+        if (!HasShootFlag(SHOOT_OVERHEAT) && player->data.toPlayer.overheat<MAX_OVERHEAT)
         {
-            player->toPlayer.overheat+=1;
+            player->data.toPlayer.overheat+=1;
 
-            if (player->toPlayer.overheat>=MAX_OVERHEAT)
+            if (player->data.toPlayer.overheat>=MAX_OVERHEAT)
             {
                 AddShootFlag(SHOOT_OVERHEAT);
             }
@@ -121,12 +137,12 @@ void Shoot()
 
             if (HasShootFlag(SHOOT_HOMING))
             {
-                b->bullet.homingRadius = 350;
+                b->data.toBullet.homingRadius = 350;
             }
 
             if (HasShootFlag(SHOOT_OVERHEAT))
             {
-                b->bullet.damage = NORMAL_BULLET_DMG / 2;
+                b->data.damage = NORMAL_BULLET_DMG / 2;
                 b->size = (Vector2){0.5f, 0.5f};
             }
         }
@@ -140,7 +156,7 @@ void DrawUI() {
     int screenHeight = GetScreenHeight();
 
     char scoreText[50];
-    sprintf(scoreText, "%d", player->toPlayer.score);
+    sprintf(scoreText, "%d", player->data.toPlayer.score);
 
     Vector2 textSize = { (float)MeasureText(scoreText, 20), 0 };
 
@@ -152,9 +168,9 @@ void DrawUI() {
     Color clr;
     if (HasShootFlag(SHOOT_OVERHEAT)) clr = RED;
     else clr = BLACK;
-    DrawText(TextFormat("%.2f", player->toPlayer.overheat), 25, screenHeight - 150, 55, clr);
+    DrawText(TextFormat("%.2f", player->data.toPlayer.overheat), 25, screenHeight - 150, 55, clr);
 
-    DrawText(TextFormat("%d", player->health), 50, screenHeight - 70, 55, clr);
+    DrawText(TextFormat("%.0f", player->data.maxHealth), 50, screenHeight - 70, 55, clr);
 }
 
 
@@ -164,19 +180,19 @@ void DrawUI() {
 void AddShootFlag(ShootFlags flag)
 {
     Entity* player = GetPlayer();
-    player->toPlayer.shootFlags |= flag;
+    player->data.toPlayer.shootFlags |= flag;
 }
 
 //Есть ли у игрока флаг стрельбы
 bool HasShootFlag(ShootFlags flag)
 {
     Entity* player = GetPlayer();
-    return (player->toPlayer.shootFlags & flag) != 0;
+    return (player->data.toPlayer.shootFlags & flag) != 0;
 }
 
 //Очищает флаг стрельбы игрока
 void ClearShootFlag(ShootFlags flag)
 {
     Entity* player = GetPlayer();
-    player->toPlayer.shootFlags &= ~flag;
+    player->data.toPlayer.shootFlags &= ~flag;
 }

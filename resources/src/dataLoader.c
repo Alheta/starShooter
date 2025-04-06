@@ -1,6 +1,5 @@
 #include "cJSON.h"
 #include "dataLoader.h"
-
 #include "raylib.h"
 
 #include <string.h>
@@ -9,12 +8,11 @@
 
 GameData gameData;
 
-const char* enemyIdNames[] = {
-
-}
-
 const char* soundIdNames[] = {
     "SOUND_SHOOT",
+    "PLAYER_DAMAGE",
+    "ENEMY_DEATH",
+    "ENEMY_DEATH_BIG"
 };
 
 
@@ -34,7 +32,8 @@ char* ReadJSONFile(const char* filename) {
     return content;
 }
 
-void LoadDataFromJson(const char *filename, GameData *gameData) {
+void LoadDataFromJson(const char *filename) {
+
     char *fileContent = ReadJSONFile(filename);  // Читаем файл
     cJSON *root = cJSON_Parse(fileContent);
     if (!root) {
@@ -42,56 +41,55 @@ void LoadDataFromJson(const char *filename, GameData *gameData) {
         return;
     }
 
-
-
     // Загрузка данных сущностей
     if (strcmp(filename, "config/entities.json") == 0) {
         cJSON *entities = cJSON_GetObjectItem(root, "entities");
 
-        // Загрузка врагов
-        cJSON *enemies = cJSON_GetObjectItem(entities, "enemies");
-        for (int i = 0; i < cJSON_GetArraySize(enemies); i++) {
-            cJSON *enemyJson = cJSON_GetArrayItem(enemies, i);
-            Entity enemy = {0};
-            enemy.type = ENEMY;
-            enemy.health = cJSON_GetObjectItem(enemyJson, "health")->valueint;
-            enemy.speed = cJSON_GetObjectItem(enemyJson, "speed")->valuedouble;
-            cJSON *colorJson = cJSON_GetObjectItem(enemyJson, "color");
-            enemy.color.r = cJSON_GetArrayItem(colorJson, 0)->valueint;
-            enemy.color.g = cJSON_GetArrayItem(colorJson, 1)->valueint;
-            enemy.color.b = cJSON_GetArrayItem(colorJson, 2)->valueint;
-            strcpy(enemy.spritePath, cJSON_GetObjectItem(enemyJson, "sprite")->valuestring);
-            enemy.enemy.score = cJSON_GetObjectItem(enemyJson, "score")->valueint;
-            enemy.variant = cJSON_GetObjectItem(enemyJson, "variant")->valueint;
-            enemy.sprite = LoadTexture(enemy.spritePath);
+        for (int i = 0; i < cJSON_GetArraySize(entities); i++) {
+            cJSON* entity = cJSON_GetArrayItem(entities, i);
+            EntityData entityData = {0};
 
-            gameData->enemies[i] = enemy;
-        }
+            // Определяем тип сущности
+            const char* typeStr = cJSON_GetObjectItem(entity, "type")->valuestring;
+            if (strcmp(typeStr, "ENEMY") == 0) {
+                entityData.type = ENTITY_ENEMY;
+            } else if (strcmp(typeStr, "BULLET") == 0) {
+                entityData.type = ENTITY_BULLET;
+            } else if (strcmp(typeStr, "POWER_UP") == 0) {
+                entityData.type = ENTITY_POWERUP;
+            } else if (strcmp(typeStr, "PARTICLE") == 0) {
+                entityData.type = ENTITY_PARTICLE;
+            }
 
-        // Загрузка пуль
-        cJSON *bullets = cJSON_GetObjectItem(entities, "bullets");
-        for (int i = 0; i < cJSON_GetArraySize(bullets); i++) {
-            cJSON *bulletJson = cJSON_GetArrayItem(bullets, i);
-            Entity bullet = {0};
-            bullet.type = BULLET;
-            bullet.bullet.damage = cJSON_GetObjectItem(bulletJson, "damage")->valueint;
-            bullet.speed = cJSON_GetObjectItem(bulletJson, "speed")->valuedouble;
-            strcpy(bullet.spritePath, cJSON_GetObjectItem(bulletJson, "sprite")->valuestring);
-            bullet.variant = cJSON_GetObjectItem(bulletJson, "variant")->valueint;
-            bullet.sprite = LoadTexture(bullet.spritePath);
 
-            gameData->bullets[i] = bullet;
-        }
+            entityData.variant = cJSON_GetObjectItem(entity, "variant")->valueint;
 
-        // Загрузка усилений
-        cJSON *powerups = cJSON_GetObjectItem(entities, "powerups");
-        for (int i = 0; i < cJSON_GetArraySize(powerups); i++) {
-            cJSON *powerUpJson = cJSON_GetArrayItem(powerups, i);
-            Entity powerUp = {0};
-            powerUp.type = POWER_UP;
-            powerUp.powerUp.duration = cJSON_GetObjectItem(powerUpJson, "duration")->valuedouble;
-            strcpy(powerUp.spritePath, cJSON_GetObjectItem(powerUpJson, "sprite")->valuestring);
-            gameData->powerups[i] = powerUp;
+            entityData.maxHealth = cJSON_GetObjectItem(entity, "health") ? cJSON_GetObjectItem(entity, "health")->valuedouble : 0;
+            entityData.speed = cJSON_GetObjectItem(entity, "speed") ? cJSON_GetObjectItem(entity, "speed")->valuedouble : 1;
+            entityData.damage = cJSON_GetObjectItem(entity, "damage") ? cJSON_GetObjectItem(entity, "damage")->valuedouble : 0;
+            entityData.collisionRadius = cJSON_GetObjectItem(entity, "collisionRadius") ? cJSON_GetObjectItem(entity, "collisionRadius")->valuedouble : 0;
+
+            cJSON* sprites = cJSON_GetObjectItem(entity, "sprite");
+            int spriteCount = cJSON_GetArraySize(sprites);
+            for (int i = 0; i < spriteCount; i++) {
+                const char *entSprite = cJSON_GetArrayItem(sprites, i)->valuestring;
+                entityData.sprite[i] = LoadTexture(entSprite);
+            }
+            entityData.spriteCount = spriteCount;
+
+            if (entityData.type == ENTITY_ENEMY) {
+                entityData.toEnemy.score = cJSON_GetObjectItem(entity, "score") ? cJSON_GetObjectItem(entity, "score")->valueint : 0;
+                entityData.toEnemy.weight = cJSON_GetObjectItem(entity, "weight") ? cJSON_GetObjectItem(entity, "weight")->valuedouble : 0;
+            } else if (entityData.type == ENTITY_BULLET) {
+                entityData.toBullet.homingRadius = cJSON_GetObjectItem(entity, "homingRadius") ? cJSON_GetObjectItem(entity, "homingRadius")->valueint : 0;
+            } else if (entityData.type == ENTITY_POWERUP) {
+                entityData.toPowerUp.duration = cJSON_GetObjectItem(entity, "duration") ? cJSON_GetObjectItem(entity, "duration")->valuedouble : 0;
+            } else if (entityData.type == ENTITY_PARTICLE) {
+                entityData.toParticle.timeOut = cJSON_GetObjectItem(entity, "timeout") ? cJSON_GetObjectItem(entity, "timeout")->valuedouble : 0;
+
+            }
+
+            gameData.entities[i] = entityData;
         }
     }
 
@@ -102,15 +100,15 @@ void LoadDataFromJson(const char *filename, GameData *gameData) {
             cJSON *soundItem = cJSON_GetObjectItem(sounds, soundIdNames[i]);
             if (soundItem) {
                 int soundCount = cJSON_GetArraySize(soundItem);
-                gameData->sounds[i].variantCount = soundCount;
+                gameData.sounds[i].variantCount = soundCount;
 
                 for (int j = 0; j < soundCount; j++) {
                     const char *soundPath = cJSON_GetArrayItem(soundItem, j)->valuestring;
                     // Загружаем звук
-                    gameData->sounds[i].variants[j]  = LoadSound(soundPath);
+                    gameData.sounds[i].variants[j]  = LoadSound(soundPath);
 
                     // Проверяем, был ли звук загружен успешно
-                    if (gameData->sounds[i].variants[j].frameCount == 0) {
+                    if (gameData.sounds[i].variants[j].frameCount == 0) {
                         printf("Error loading sound: %s\n", soundPath);
                     }
                 }
@@ -118,6 +116,6 @@ void LoadDataFromJson(const char *filename, GameData *gameData) {
         }
     }
 
-
+    cJSON_Delete(root);
     free(fileContent);
 }

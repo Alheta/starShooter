@@ -24,10 +24,9 @@ typedef struct Zone {
 
 typedef struct Spawner {
     int spawnDelay;
-    float spawnWeights[ENEMY_COUNT];
-    EnemyVariant spawnPool[ENEMY_COUNT];
     int spawnPoolSize;
 } Spawner;
+
 
 //Работа с Зонами
 void AddZone(float baseWidth, float baseHeight, ZoneType type, float scale);
@@ -39,13 +38,12 @@ Vector2 GetRandomPositionInZone(ZoneType type);
 
 //Работа с Энтити
 Entity** GetGameEntities();
-void* SpawnEntity(EntityType entityType, int entityVariant, Vector2 position, Vector2 velocity);
+Entity* SpawnEntity(EntityType type, int variant, Vector2 position, Vector2 velocity);
 void* KillEntity(Entity* entity);
 Entity* GetClosestEntity(Vector2 position, float radius, EntityType type);
 
 //Спавнер
-EnemyVariant GetRandomEnemyFromPool();
-int GetPlayerScore();
+int GetRandomEnemyFromPool();
 void InitSpawner();
 Spawner* GetSpawner();
 void SpawnerUpdate();

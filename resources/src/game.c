@@ -131,12 +131,11 @@ Entity** GetGameEntities()
     return gameEntities;
 }
 
-void* SpawnEntity(EntityType entityType, int variant, Vector2 position, Vector2 velocity)
-{
+Entity* SpawnEntity(EntityType type, int variant, Vector2 position, Vector2 velocity) {
+    // Найдем сущность по типу и варианту
     for (int i = 0; i < MAX_ENTITIES; i++) {
-        if (gameEntities[i] == NULL)
-        {
-            Entity *entity = (Entity*)malloc(sizeof(Entity));
+        if (gameEntities[i] == NULL) {
+            Entity* entity = (Entity*)malloc(sizeof(Entity));
             if (!entity) {
                 printf("Error: Out of memory!\n");
                 return NULL;
@@ -144,34 +143,39 @@ void* SpawnEntity(EntityType entityType, int variant, Vector2 position, Vector2 
 
             memset(entity, 0, sizeof(Entity));
 
-            // Заполняем общие поля
-            if (entityType == ENEMY) {
-                *entity = gameData.enemies[variant];
-            } else if (entityType == BULLET) {
-                *entity = gameData.bullets[variant];
-            } else if (entityType == POWER_UP) {
-                *entity = gameData.powerups[variant];
+            // Ищем сущность в gameData по типу и варианту
+            for (int j = 0; j < MAX_ENTITIES; j++) {
+                if (gameData.entities[j].type == type && gameData.entities[j].variant == variant) {
+                    entity->data = gameData.entities[j];  // Копируем данные сущности
+                    break;
+                }
             }
 
-            entity->shouldRotate = true;
-            entity->spriteRotation = 0;
-            entity->spriteRotationSpeed = (rand() % 2001 - 1000) / 1000.0f;
-            entity->size.x = 1;
-            entity->size.y = 1;
-            entity->sprite.width = entity->sprite.width * (entity->size.x*SPRITE_SCALE);
-            entity->sprite.height = entity->sprite.height * (entity->size.y*SPRITE_SCALE);
+            entity->color = WHITE;
 
-            entity->collisionRadius = entity->sprite.width/2;
+            entity->randomSpriteIndex = rand() % entity->data.spriteCount;
 
             entity->position = position;
             entity->velocity = velocity;
+
+            entity->size.x = 1;
+            entity->size.y = 1;
+            entity->data.sprite[entity->randomSpriteIndex].width = entity->data.sprite[entity->randomSpriteIndex].width * (entity->size.x*SPRITE_SCALE);
+            entity->data.sprite[entity->randomSpriteIndex].height = entity->data.sprite[entity->randomSpriteIndex].height * (entity->size.y*SPRITE_SCALE);
+
+            if (IsAsteroid(entity))
+            {
+                entity->shouldRotate = true;
+                entity->spriteRotationSpeed = (rand() % 2001 - 1000) / 1000.f;
+            }
 
             gameEntities[i] = entity;
             return entity;
         }
     }
 
-    printf("Error: Reached the maximum amount of entities!\n");
+    printf("Error: Reached the maximum number of entities!\n");
+    return NULL;
 }
 
 void* KillEntity(Entity* entity)
@@ -193,7 +197,7 @@ Entity* GetClosestEntity(Vector2 position, float radius, EntityType type)
     for (int i = 0; i < MAX_ENTITIES; i++) {
         Entity* entity = gameEntities[i];
 
-        if (entity != NULL && entity->type == type) {
+        if (entity != NULL && entity->data.type == type) {
             float distance = Vector2Distance(position, entity->position);
 
             if (distance < minDistance) {
@@ -219,33 +223,36 @@ void InitSpawner()
     Spawner* spawner = GetSpawner();
 
     spawner->spawnDelay = 30;
-
-    spawner->spawnWeights[ENEMY_ASTEROID] = 1.0f;
-    //spawner->spawnWeights[ENEMY_POWERED_ASTEROID] = 0.07f;
-    spawner->spawnWeights[ENEMY_EXPLOSIVE_ASTEROID] = 0.5f;
-    //spawner->spawnWeights[ENEMY_SHOOTER] = 0.8f;
-
-    spawner->spawnPool[0] = ENEMY_ASTEROID;
-    spawner->spawnPoolSize = 1;
+    spawner->spawnPoolSize = 0;
 }
 
-EnemyVariant GetRandomEnemyFromPool() {
+
+// Функция для получения случайного врага из пула, используя вес
+int GetRandomEnemyFromPool() {
     Spawner* spawner = GetSpawner();
 
+    // Общий вес всех врагов в пуле
     float totalWeight = 0;
-    for (int i = 0; i < spawner->spawnPoolSize; i++) {
-        totalWeight += spawner->spawnWeights[spawner->spawnPool[i]];
-    }
-
-    float randomWeight = (float)rand() / RAND_MAX * totalWeight;
-
-    for (int i = 0; i < spawner->spawnPoolSize; i++) {
-        randomWeight -= spawner->spawnWeights[spawner->spawnPool[i]];
-        if (randomWeight <= 0) {
-            return spawner->spawnPool[i];
+    for (int i = 0; i < 100; i++) { // Проходим по всему массиву сущностей
+        if (gameData.entities[i].type == ENTITY_ENEMY) { // Проверка, что это враг
+            totalWeight += gameData.entities[i].toEnemy.weight; // Добавляем вес врага
         }
     }
-    return ENEMY_ASTEROID;
+
+    // Генерация случайного веса для выбора врага
+    float randomWeight = (float)rand() / RAND_MAX * totalWeight;
+
+    // Выбор врага на основе случайного веса
+    for (int i = 0; i < 100; i++) { // Проходим по массиву сущностей
+        if (gameData.entities[i].type == ENTITY_ENEMY) {
+            randomWeight -= gameData.entities[i].toEnemy.weight;
+            if (randomWeight <= 0) {
+                return gameData.entities[i].variant;
+            }
+        }
+    }
+
+    return 0;  // Если не удалось выбрать врага
 }
 
 void SpawnerUpdate() {
@@ -253,34 +260,33 @@ void SpawnerUpdate() {
     Spawner* spawner = GetSpawner();
 
     if (spawner->spawnDelay == 0) {
-        int additionalEnemyCount = player->toPlayer.score / 50;
-        if (additionalEnemyCount > spawner->spawnPoolSize - 1) {
-            if (spawner->spawnPoolSize < ENEMY_COUNT) {
-                spawner->spawnPool[spawner->spawnPoolSize] = (EnemyVariant)(spawner->spawnPoolSize);
-                spawner->spawnPoolSize++;
+        int additionalEnemyCount = player->data.toPlayer.score / 50;
 
-                if (spawner->spawnDelay > 90) {
-                    spawner->spawnDelay -= 5;
-                }
+        if (additionalEnemyCount > spawner->spawnPoolSize) {
+            // Расширяем пул врагов, если необходимо
+            spawner->spawnPoolSize++;
+
+            // Уменьшаем задержку спавна при достижении определенного количества врагов
+            if (spawner->spawnDelay > 90) {
+                spawner->spawnDelay -= 5;
             }
         }
 
-        EnemyVariant randomEnemy = GetRandomEnemyFromPool();
 
+        // Получаем случайного врага из пула
+        int randomEnemy = GetRandomEnemyFromPool();
         float random_angle = 90.0f + (rand() % 91) - 45.0f;
-
         float angle_rad = DegreeToRadian(random_angle);
 
         Vector2 velocity;
-        velocity.x = cosf(angle_rad)/4;
-        velocity.y = sinf(angle_rad)/4;
+        velocity.x = cosf(angle_rad) / 4;
+        velocity.y = sinf(angle_rad) / 4;
 
-
-        SpawnEntity(ENEMY, randomEnemy, GetRandomPositionInZone(SPAWNER_ZONE), velocity);
+        // Спавним сущность
+        SpawnEntity(ENTITY_ENEMY, randomEnemy, GetRandomPositionInZone(SPAWNER_ZONE), velocity);
 
         spawner->spawnDelay = 25;
-    }
-    else {
+    } else {
         spawner->spawnDelay--;
     }
 }

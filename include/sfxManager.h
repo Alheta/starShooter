@@ -1,18 +1,19 @@
 #ifndef SFXMANAGER_H
 #define SFXMANAGER_H
 
-// Per-sound types enumeration
-typedef enum {
+typedef enum SoundID {
     SHOOT_SOUND,
-    SOUND_COUNT_ENUM  // Number of sound types
+    PLAYER_DAMAGE,
+    ENEMY_DEATH,
+    ENEMY_DEATH_BIG,
+    SOUND_COUNT_ENUM
 } SoundID;
 
-// Structure to hold sound variants
 typedef struct {
-    Sound variants[10];  // Maximum 10 variants per sound
-    int variantCount;    // Number of sound variants
-} SoundGroupData;
+    Sound variants[10];
+    int variantCount;
+} SoundData;
 
-void SFXPlay(SoundID soundGroup, float volume, float pitch, float pan);  // Changed name
+void SFXPlay(SoundID soundGroup, float volume, float pitch, float pan);
 
 #endif // SFXMANAGER_H

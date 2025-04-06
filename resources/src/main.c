@@ -12,7 +12,7 @@
 // SCREEN PARAMETERS
 static int baseScreenWidth = SCREEN_WIDTH;
 static int baseScreenHeight = SCREEN_HEIGHT;
-static const char * screenTitle = "Star Shooter v0.1";
+static const char * screenTitle = "Star Shooter v0.5";
 
 //Function Declaration
 	//Core Game
@@ -39,10 +39,12 @@ int main() {
 
 	Camera2D* camera = InitCameraScaler();
 
-	LoadDataFromJson("config/entities.json", &gameData);
-	LoadDataFromJson("config/sounds.json", &gameData);
+	LoadDataFromJson("config/entities.json");
+	LoadDataFromJson("config/sounds.json");
 
 	RegisterAllCallbacks();
+
+	InitPlayer();
 
 	while(!WindowShouldClose()) {
 		BeginDrawing();
@@ -173,7 +175,7 @@ void RestartGame()
         Entity* entity = GetGameEntities()[i];
 		if (entity)
 		{
-			if (entity->type != PLAYER)
+			if (entity->data.type != ENTITY_PLAYER)
 			{
 				KillEntity(entity);
 			}

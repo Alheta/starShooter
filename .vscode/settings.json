@@ -7,7 +7,8 @@
         "bullet.h": "c",
         "constants.h": "c",
         "game.h": "c",
-        "entity.h": "c"
+        "entity.h": "c",
+        "dataloader.h": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

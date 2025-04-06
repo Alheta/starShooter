@@ -2,8 +2,24 @@
     "sounds": {
         "SOUND_SHOOT": 
         [
-            "resources/sfx/player/shoot01.wav"
+            "resources/sfx/player/shoot01.wav",
+            "resources/sfx/player/shoot02.wav",
+            "resources/sfx/player/shoot02.wav"
+        ],
+        "PLAYER_DAMAGE":
+        [
+            "resources/sfx/player/damage01.wav"
+        ],
+        "ENEMY_DEATH":
+        [
+            "resources/sfx/enemy/death01.wav",
+            "resources/sfx/enemy/death02.wav",
+            "resources/sfx/enemy/death03.wav"
+        ],
+        "ENEMY_DEATH_BIG":
+        [
+            "resources/sfx/enemy/deathBig01.wav",
+            "resources/sfx/enemy/deathBig02.wav"
         ]
-
     }
 }

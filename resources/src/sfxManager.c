@@ -11,6 +11,5 @@ void SFXPlay(SoundID sound, float volume, float pitch, float pan) {  // Changed 
         PlaySound(gameData.sounds[sound].variants[randomIndex]);
         SetSoundVolume(gameData.sounds[sound].variants[randomIndex], volume);
         SetSoundPitch(gameData.sounds[sound].variants[randomIndex], pitch);
-        SetSoundPan(gameData.sounds[sound].variants[randomIndex], pan);
     }
 }
