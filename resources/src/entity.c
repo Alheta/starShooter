@@ -93,7 +93,7 @@ bool Collides(Entity* ent1, Entity* ent2)
 
 bool IsVulnerableEntity(Entity* entity)
 {
-    return (entity->data.maxHealth > 0 || entity->data.type == ENTITY_ENEMY || entity->data.type == ENTITY_PLAYER);
+    return (entity->data.health > 0 || entity->data.type == ENTITY_ENEMY || entity->data.type == ENTITY_PLAYER);
 }
 
 void TakeDamage(Entity* entity, int damage) {
@@ -106,17 +106,17 @@ void TakeDamage(Entity* entity, int damage) {
             if (entity->data.toPlayer.iFrames <= 0)
             {
                 ShakeScreen(0.15, 15);
-                entity->data.maxHealth -= damage;
+                entity->data.health -= damage;
                 entity->data.toPlayer.iFrames = 60;
                 SFXPlay(PLAYER_DAMAGE, 1, 1, 0);
             }
             break;
         default:
-            entity->data.maxHealth -= damage;
+            entity->data.health -= damage;
             break;
     }
 
-    if (entity->data.maxHealth <= 0) {
+    if (entity->data.health <= 0) {
         if (entity->data.type == ENTITY_ENEMY) {
             CallCallbacks(POST_ENEMY_DEATH, (void*)entity);  // Передаем entity как void*
             KillEntity(entity);
@@ -294,13 +294,16 @@ void DrawEntities() {
         }
     }
 
-    int CompareByZIndex(const void* a, const void* b) {
+    int CompareByZIndexThenY(const void* a, const void* b) {
         const Entity* ea = *(const Entity**)a;
         const Entity* eb = *(const Entity**)b;
-        return ea->zIndex - eb->zIndex;
+        if (ea->zIndex != eb->zIndex) {
+            return ea->zIndex - eb->zIndex;
+        }
+        return (int)(ea->position.y - eb->position.y);
     }
 
-    qsort(sorted, count, sizeof(Entity*), CompareByZIndex);
+    qsort(sorted, count, sizeof(Entity*), CompareByZIndexThenY);
 
     for (int i = 0; i < count; i++) {
         Entity* entity = sorted[i];

@@ -4,6 +4,7 @@
 
 #include "entity.h"
 #include "player.h"
+#include "game.h"
 
 // Массив для хранения зарегистрированных коллбэков
 static CallbackEntry callbacks[MAX_CALLBACKS];
@@ -58,6 +59,9 @@ void CallCallbacks(CallbackType type, void* data) {
                 }
                 break;
             }
+            case POST_BUTTON_CLICK: {
+                break;
+            }
             default:
                 break;
         }
@@ -83,5 +87,8 @@ void RegisterAllCallbacks() {
     AddCallback(POST_POWER_UP_REMOVE, OnTripleRemove, (void* )(intptr_t)SHOOT_TRIPLE_SHOT);
     AddCallback(POST_POWER_UP_REMOVE, OnCoolingRemove, (void*)(intptr_t)SHOOT_COOLING);
     AddCallback(POST_POWER_UP_REMOVE, OnHomingRemove, (void* )(intptr_t)SHOOT_HOMING);
+
+
+    AddCallback(POST_BUTTON_CLICK, OnButtonClick, (void* )0);
 
 }

@@ -14,10 +14,12 @@ typedef enum ShootFlags {
 
 typedef struct ActivePowerUp {
     ShootFlags flag;
-    int duration;
+    float duration;
+    float maxDuration;
 } ActivePowerUp;
 
 #include "entity.h"
+#include "raylib.h"
 
 ShootFlags GetRandomFlag();
 
@@ -33,5 +35,7 @@ void OnHomingRemove();
 void OnCoolingApply();
 void OnCoolingRemove();
 
+Texture2D GetIconForPowerUp(ShootFlags type);
+void LoadPowerUpIcons();
 
 #endif

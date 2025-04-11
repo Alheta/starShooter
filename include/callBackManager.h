@@ -6,6 +6,7 @@ typedef enum {
     POST_PLAYER_DAMAGE,
     POST_POWER_UP_PICKUP,
     POST_POWER_UP_REMOVE,
+    POST_BUTTON_CLICK,
 } CallbackType;
 
 typedef struct {

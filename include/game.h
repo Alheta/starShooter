@@ -27,7 +27,6 @@ typedef struct Spawner {
     int spawnPoolSize;
 } Spawner;
 
-
 //Работа с Зонами
 void AddZone(float baseWidth, float baseHeight, ZoneType type, float scale);
 void ZoneUpdate();
@@ -50,6 +49,6 @@ void SpawnerUpdate();
 
 //Другое
 float DegreeToRadian(float degree);
-
+void  OnButtonClick(void* data);
 
 #endif // GAME_H

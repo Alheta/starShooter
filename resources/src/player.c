@@ -22,7 +22,7 @@ void InitPlayer() {
     player->defaultColor = WHITE;
     player->size = (Vector2){1,1};
 
-    player->position = (Vector2){GetScreenWidth()/2, GetScreenHeight()/2};
+    player->position = (Vector2){GetZoneByType(GAMEPLAY_ZONE)->baseWidth/2, GetZoneByType(GAMEPLAY_ZONE)->baseHeight/2};
 
     player->data.toPlayer.maxFireDelay = NORMAL_FIREDELAY;
     player->data.toPlayer.fireDelay = 0;
@@ -30,6 +30,7 @@ void InitPlayer() {
     player->data.toPlayer.score = 0;
     player->data.toPlayer.shootFlags = 0;
     player->data.maxHealth = 100;
+    player->data.health = player->data.maxHealth;
     player->data.toPlayer.iFrames = 0;
     player->data.collisionRadius = 30;
 
@@ -173,20 +174,28 @@ void Shoot()
 
 void AddPowerUps(ShootFlags flag, int duration) {
     Entity* player = GetPlayer();
+
+    SFXPlay(POWER_UP_PICKUP, 0.55, 1, 0);
+
     for (int i = 0; i < MAX_ACTIVE_POWERUPS; i++) {
         ActivePowerUp* pu = &player->data.toPlayer.powerUps[i];
 
-        if (pu->flag == flag) {
+        if (pu->flag == flag && pu->duration > 0) {
             pu->duration = duration;
+            pu->maxDuration = duration;
             return;
         }
+    }
+
+    for (int i = 0; i < MAX_ACTIVE_POWERUPS; i++) {
+        ActivePowerUp* pu = &player->data.toPlayer.powerUps[i];
 
         if (pu->duration <= 0) {
             pu->flag = flag;
             pu->duration = duration;
+            pu->maxDuration = duration;
 
             CallCallbacks(POST_POWER_UP_PICKUP, (void*)(intptr_t)flag);
-
             player->data.toPlayer.shootFlags |= flag;
             return;
         }
@@ -206,37 +215,13 @@ void UpdatePowerUps() {
                 player->data.toPlayer.shootFlags &= ~pu->flag;
 
                 CallCallbacks(POST_POWER_UP_REMOVE, (void*)(intptr_t)pu->flag);
+                SFXPlay(POWER_UP_END, 0.55, 1, 0);
 
                 pu->flag = 0;
             }
         }
     }
 }
-
-void DrawUI() {
-    Entity* player = GetPlayer();
-
-    int screenWidth = GetScreenWidth();
-    int screenHeight = GetScreenHeight();
-
-    char scoreText[50];
-    sprintf(scoreText, "%d", player->data.toPlayer.score);
-
-    Vector2 textSize = { (float)MeasureText(scoreText, 20), 0 };
-
-    Vector2 textPosition = { (GetScreenWidth() - textSize.x) / 2, 10 };
-
-    DrawText(scoreText, textPosition.x, textPosition.y, 55 * GetScaleFactor(), WHITE);
-
-    //Перегрев
-    Color clr;
-    if (HasShootFlag(SHOOT_OVERHEAT)) clr = RED;
-    else clr = WHITE;
-    DrawText(TextFormat("%.2f", player->data.toPlayer.overheat), 25, screenHeight - 150, 55, clr);
-
-    DrawText(TextFormat("%.0f", player->data.maxHealth), 50, screenHeight - 70, 55, clr);
-}
-
 
 // SHOOT FLAGS:
 

@@ -28,7 +28,7 @@
             "damage": 10,
             "collisionRadius": 50,
             "score": 10,
-            "weight": 0.15,
+            "weight": 0.25,
             "threshold": 100
         },
         {
@@ -42,8 +42,8 @@
             "damage": 10,
             "collisionRadius": 70,
             "score": 50,
-            "weight": 0.05,
-            "threshold": 300
+            "weight": 0.15,
+            "threshold": 250
         },
         {
             "type": "BULLET",

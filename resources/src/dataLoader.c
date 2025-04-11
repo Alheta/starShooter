@@ -13,7 +13,12 @@ const char* soundIdNames[] = {
     "SOUND_SHOOT",
     "PLAYER_DAMAGE",
     "ENEMY_DEATH",
-    "ENEMY_DEATH_BIG"
+    "ENEMY_DEATH_BIG",
+    "ENEMY_DEATH_POWERED",
+    "POWER_UP_PICKUP",
+    "POWER_UP_END",
+    "BUTTON_SELECT",
+    "BUTTON_PRESS",
 };
 
 typedef struct {

@@ -8,6 +8,8 @@
 #include "decoration.h"
 #include "callBackManager.h"
 #include "debug.h"
+#include "UI.h"
+#include "powerUp.h"
 
 #include <stdio.h>
 
@@ -49,6 +51,7 @@ int main() {
 
 	LoadDataFromJson("config/entities.json");
 	LoadDataFromJson("config/sounds.json");
+	LoadPowerUpIcons();
 
 	RegisterAllCallbacks();
 
@@ -56,10 +59,16 @@ int main() {
 
 	while(!WindowShouldClose()) {
 		BeginDrawing();
-		ClearBackground((Color){ 10, 0, 20, 255 }); // тёмно-фиолетовый космический цвет
+
+		if (IsKeyPressed(KEY_ESCAPE)) {
+			CloseWindow();
+			break;
+		}
 
 		if (IsKeyPressed(KEY_F))
 			ToggleBorderlessWindowed();
+
+		ClearBackground((Color){ 10, 0, 20, 255 });
 
         AdjustCamera();
 
@@ -99,7 +108,7 @@ void UpdateGame()
 }
 
 void DrawMenu() {
-	DrawText("Move:ARROWS\nShoot:Z", 10, 10, 17, WHITE);
+	DrawText("Move: -ARROWS-\nShoot: -Z-\nexit the game: -ESC-", 10, 10, 30, WHITE);
 
 
 	char* mainMenuText = "Main Menu";
@@ -114,6 +123,8 @@ void DrawMenu() {
     if (CheckCollisionPointRec(GetMousePosition(), playButton)) {
         DrawRectangleLines(playButton.x, playButton.y, playButton.width, playButton.height, WHITE);
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+			CallCallbacks(POST_BUTTON_CLICK, (void* )0);
+
 			ChangeScreen(SCREEN_GAME);
 			RestartGame();
 		}
@@ -153,12 +164,16 @@ void DrawGameover() {
     if (CheckCollisionPointRec(GetMousePosition(), menuButton)) {
         DrawRectangleLines(menuButton.x, menuButton.y, menuButton.width, menuButton.height, WHITE);
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+			CallCallbacks(POST_BUTTON_CLICK, (void* )0);
+
 			ChangeScreen(SCREEN_MENU);
 		}
     }
 	else if (CheckCollisionPointRec(GetMousePosition(), retryButton)) {
         DrawRectangleLines(retryButton.x, retryButton.y, retryButton.width, retryButton.height, WHITE);
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+			CallCallbacks(POST_BUTTON_CLICK, (void* )0);
+
 			ChangeScreen(SCREEN_GAME);
 			RestartGame();
 		}

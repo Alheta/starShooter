@@ -6,6 +6,7 @@
 #include "raymath.h"
 #include "dataLoader.h"
 #include "debug.h"
+#include "sfxManager.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -155,6 +156,7 @@ Entity* SpawnEntity(EntityType type, int variant, Vector2 position, Vector2 velo
                 }
             }
 
+            entity->data.health = entity->data.maxHealth;
             entity->defaultColor = WHITE;
             entity->color = entity->defaultColor;
 
@@ -295,4 +297,9 @@ void SpawnerUpdate() {
 //ДРУГОЕ
 float DegreeToRadian(float degree) {
     return degree * (3.14159265358979323846f / 180.0f); // Преобразуем в радианы
+}
+
+void OnButtonClick(void* data)
+{
+	SFXPlay(BUTTON_PRESS, 0.55, 1, 0);
 }

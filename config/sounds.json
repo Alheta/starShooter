@@ -20,6 +20,31 @@
         [
             "resources/sfx/enemy/deathBig01.wav",
             "resources/sfx/enemy/deathBig02.wav"
+        ],
+        "ENEMY_DEATH_POWERED":
+        [
+            "resources/sfx/enemy/deathBig01.wav",
+            "resources/sfx/enemy/deathBig02.wav"
+        ],
+        "POWER_UP_PICKUP":
+        [
+            "resources/sfx/enemy/deathBig01.wav",
+            "resources/sfx/enemy/deathBig02.wav"
+        ],
+        "POWER_UP_END":
+        [
+            "resources/sfx/enemy/deathBig01.wav",
+            "resources/sfx/enemy/deathBig02.wav"
+        ],
+        "BUTTON_SELECT":
+        [
+            "resources/sfx/enemy/deathBig01.wav",
+            "resources/sfx/enemy/deathBig02.wav"
+        ],
+        "BUTTON_PRESS":
+        [
+            "resources/sfx/enemy/deathBig01.wav",
+            "resources/sfx/enemy/deathBig02.wav"
         ]
     }
 }

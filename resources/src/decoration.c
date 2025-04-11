@@ -28,8 +28,19 @@ void SpawnDecoration(Vector2 pos, int variant) {
 
     float depth = (80 + rand() % 120);
 
-    ent->defaultColor = DARKGRAY;
-    ent->defaultColor.a = (unsigned char)(255 - depth);
+    Color baseColor = (Color){10, 0, 20, 255};
+
+    Color decorationColor = (Color){120, 100, 180, 255};
+    float darkenFactor = (255 - depth) / 180.0f;
+
+    decorationColor.r = (unsigned char)(decorationColor.r * darkenFactor);
+    decorationColor.g = (unsigned char)(decorationColor.g * darkenFactor);
+    decorationColor.b = (unsigned char)(decorationColor.b * darkenFactor);
+
+    ent->defaultColor.r = (unsigned char)((decorationColor.r + baseColor.r) / 2);
+    ent->defaultColor.g = (unsigned char)((decorationColor.g + baseColor.g) / 2);
+    ent->defaultColor.b = (unsigned char)((decorationColor.b + baseColor.b) / 2);
+    ent->defaultColor.a = 255;
 
     ent->size.x = depth/160;
     ent->size.y = depth/160;

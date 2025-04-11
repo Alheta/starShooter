@@ -23,6 +23,20 @@ void OnSpeedBoostRemove()
     printf("INFO: Speed Boost Removed!\n");
 }
 
+static Texture2D powerUpIcons[ShootFlags_COUNT];
+
+void LoadPowerUpIcons() {
+    powerUpIcons[SHOOT_TRIPLE_SHOT] = LoadTexture("resources/gfx/power ups/triple_shot_00.png");
+    powerUpIcons[SHOOT_HOMING] = LoadTexture("resources/gfx/power ups/homing_00.png");
+    powerUpIcons[SHOOT_COOLING] = LoadTexture("resources/gfx/power ups/cooling_00.png");
+    powerUpIcons[SHOOT_SPEED] = LoadTexture("resources/gfx/power ups/speed_boost_00.png");
+}
+
+Texture2D GetIconForPowerUp(ShootFlags type) {
+    if (type >= 0 && type < ShootFlags_COUNT)
+        return powerUpIcons[type];
+}
+
 
 //Функции-пустышки, т.к. вся логика уже прописана с назначением флага
 

@@ -18,6 +18,7 @@ typedef struct EntityData {
     EntityType type; //Тип сущености | Игрок, враг, пуля, усиление, частица
     int variant; //Вариант сущности
 
+    float health;
     float maxHealth; // Максимальное здоровье сущности
     float speed; // Скорость сущности
     float damage; // Урон сущности
