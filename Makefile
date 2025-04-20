@@ -5,7 +5,7 @@ OBJ_DIR = resources\src\obj
 INCLUDE_DIR = include
 LIB_DIR = lib
 
-RES_FILE = resources.res
+RES_FILE = config\meta\resources.res
 RC_FILE = config\meta\resources.rc
 ICON_PATH = config\meta\icon.ico
 

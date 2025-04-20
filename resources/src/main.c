@@ -24,7 +24,6 @@ static const char * screenTitle = "Star Shooter v1.0";
 	static void DrawMenu();
 	static void DrawGameplay(Camera2D* camera);
 	static void DrawGameover();
-	static void RestartGame();
 
 ScreenType currentScreen = SCREEN_MENU;
 
@@ -52,6 +51,7 @@ int main() {
 	LoadDataFromJson("config/entities.json");
 	LoadDataFromJson("config/sounds.json");
 	LoadPowerUpIcons();
+	LoadButtonData();
 
 	RegisterAllCallbacks();
 
@@ -108,27 +108,9 @@ void UpdateGame()
 }
 
 void DrawMenu() {
+	ButtonRender(BUTTON_START, (Vector2){GetScreenWidth()/2, GetScreenHeight()/2+75});
+	ButtonRender(BUTTON_EXIT, (Vector2){GetScreenWidth()/2, GetScreenHeight()/2+150});
 	DrawText("Move: -ARROWS-\nShoot: -Z-\nexit the game: -ESC-", 10, 10, 30, WHITE);
-
-
-	char* mainMenuText = "Main Menu";
-	char* playButtonText = "Play";
-    DrawText(mainMenuText, GetScreenWidth()/2-MeasureText(mainMenuText, 30)/2, GetScreenHeight()/2-50, 30, WHITE);
-
-	Rectangle playButton = {GetScreenWidth()/2-100, GetScreenHeight()/2+150, 200, 50 };
-
-    DrawRectangleRec(playButton, MAROON);
-    DrawText(playButtonText, playButton.x + 75, playButton.y + 15, 20, WHITE);
-
-    if (CheckCollisionPointRec(GetMousePosition(), playButton)) {
-        DrawRectangleLines(playButton.x, playButton.y, playButton.width, playButton.height, WHITE);
-		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-			CallCallbacks(POST_BUTTON_CLICK, (void* )0);
-
-			ChangeScreen(SCREEN_GAME);
-			RestartGame();
-		}
-    }
 }
 
 void DrawGameplay(Camera2D* camera)
@@ -145,54 +127,6 @@ void DrawGameplay(Camera2D* camera)
 }
 
 void DrawGameover() {
-	char* menuText = "Game Over!";
-	char* menuButtonText = "Main Menu";
-	char* retryButtonText = "Retry";
-
-    DrawText(menuText, GetScreenWidth()/2-MeasureText(menuText, 30)/2, GetScreenHeight()/2-50, 30, WHITE);
-
-	Rectangle menuButton = {GetScreenWidth()/2-100, GetScreenHeight()/2+150, 200, 50 };
-
-    DrawRectangleRec(menuButton, MAROON);
-    DrawText(menuButtonText, menuButton.x + 50, menuButton.y + 15, 20, WHITE);
-
-	Rectangle retryButton = {GetScreenWidth()/2-100, GetScreenHeight()/2+220, 200, 50 };
-
-	DrawRectangleRec(retryButton, MAROON);
-    DrawText(retryButtonText, retryButton.x + 75, retryButton.y + 15, 20, WHITE);
-
-    if (CheckCollisionPointRec(GetMousePosition(), menuButton)) {
-        DrawRectangleLines(menuButton.x, menuButton.y, menuButton.width, menuButton.height, WHITE);
-		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-			CallCallbacks(POST_BUTTON_CLICK, (void* )0);
-
-			ChangeScreen(SCREEN_MENU);
-		}
-    }
-	else if (CheckCollisionPointRec(GetMousePosition(), retryButton)) {
-        DrawRectangleLines(retryButton.x, retryButton.y, retryButton.width, retryButton.height, WHITE);
-		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-			CallCallbacks(POST_BUTTON_CLICK, (void* )0);
-
-			ChangeScreen(SCREEN_GAME);
-			RestartGame();
-		}
-    }
-}
-
-void RestartGame()
-{
-    for (int i = 0; i < MAX_ENTITIES; i++) {
-        Entity* entity = GetGameEntities()[i];
-		if (entity)
-		{
-			if (entity->data.type != ENTITY_PLAYER)
-			{
-				KillEntity(entity);
-			}
-		}
-	}
-
-	InitPlayer();
-	InitSpawner();
+	ButtonRender(BUTTON_MENU, (Vector2){GetScreenWidth()/2, GetScreenHeight()/2+75});
+	ButtonRender(BUTTON_RETRY, (Vector2){GetScreenWidth()/2, GetScreenHeight()/2+150});
 }

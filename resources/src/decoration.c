@@ -54,7 +54,7 @@ void DecorationSpawner()
     DecoSpawner* decoSpawner = GetDecorationSpawner();
     if (decoSpawner->starSpawnDelay <= 0)
     {
-        if (rand() % 100 < 5)
+        if (rand() % 100 < 30)
         {
             Vector2 pos = { rand() % SCREEN_WIDTH, -600 };
             SpawnDecoration(pos, 0);
@@ -64,7 +64,7 @@ void DecorationSpawner()
 
     if (decoSpawner->planetSpawnDelay <= 0)
     {
-        if (rand() % 1500 < 5)
+        if (rand() % 1500 < 250)
         {
             Vector2 pos = { rand() % SCREEN_WIDTH, -600 };
             SpawnDecoration(pos, 1);
@@ -74,7 +74,7 @@ void DecorationSpawner()
 
     if (decoSpawner->planetSpawnDelay <= 0)
     {
-        if (rand() % 2000 < 5)
+        if (rand() % 2000 < 300)
         {
             Vector2 pos = {GetRandomGiantPosition(), -600 };
             SpawnDecoration(pos, 2);

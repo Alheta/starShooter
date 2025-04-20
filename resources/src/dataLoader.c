@@ -1,6 +1,8 @@
 #include "cJSON.h"
 #include "dataLoader.h"
 #include "raylib.h"
+#include "entity.h"
+#include "constants.h"
 
 
 #include <string.h>
@@ -152,4 +154,44 @@ void LoadDataFromJson(const char *filename) {
 
     cJSON_Delete(root);
     free(fileContent);
+}
+
+void LoadButtonData()
+{
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        Button b = {0};
+        b.type = i;
+        b.sprite = LoadTexture("resources/gfx/ui/button.png");
+        b.size = 1;
+        b.rec = (Rectangle){0,0,0,0};
+        b.defaultColor = (Color){ 200, 60, 60, 255 };
+        b.selectionColor = (Color){ 230, 40, 40, 255 };
+        b.isSelected = false;
+        switch (b.type)
+        {
+            case BUTTON_START:
+                b.text = "Play";
+                break;
+
+            case BUTTON_EXIT:
+                b.text = "Exit";
+                break;
+            case BUTTON_MENU:
+                b.text = "Main Menu";
+                break;
+            case BUTTON_RETRY:
+                b.text = "Retry";
+                break;
+
+            default:
+                break;
+        }
+        b.color = b.defaultColor;
+        gameData.buttons[i] = b;
+    }
+}
+
+void LoadConstantSprites()
+{
+
 }

@@ -38,8 +38,7 @@
         ],
         "BUTTON_SELECT":
         [
-            "resources/sfx/enemy/deathBig01.wav",
-            "resources/sfx/enemy/deathBig02.wav"
+            "resources/sfx/ui/buttonSelect.wav"
         ],
         "BUTTON_PRESS":
         [

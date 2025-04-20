@@ -1,7 +1,10 @@
-#include "UI.h"
 #include "gameScreen.h"
 #include "raylib.h"
 #include "game.h"
+#include "constants.h"
+#include "dataLoader.h"
+#include "callBackManager.h"
+#include "UI.h"
 
 #include <stdio.h>
 #include <math.h>
@@ -83,4 +86,87 @@ void DrawActivePowerUps() {
             DrawRectangle(iconPos.x, barY, iconSize * durationRatio, barHeight, PURPLE);
         }
     }
+}
+
+void ButtonRender(ButtonType type, Vector2 position)
+{
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        if (i == type)
+        {
+            Button* b = &gameData.buttons[i];
+
+            float scale = SPRITE_SCALE * b->size;
+            float width = b->sprite.width * scale;
+            float height = b->sprite.height * scale;
+
+            // Центр → верхний левый угол
+            b->position = (Vector2){ position.x - width / 2, position.y - height / 2 };
+
+            Rectangle source = { 0, 0, b->sprite.width, b->sprite.height };
+            b->rec = (Rectangle){
+                b->position.x,
+                b->position.y,
+                width,
+                height
+            };
+
+            Vector2 origin = { 0, 0 }; // Отрисовка от левого верхнего угла
+
+            DrawTexturePro(b->sprite, source, b->rec, origin, 0, b->color);
+
+            int textSize = b->size * 25;
+            DrawText(
+                b->text,
+                b->rec.x + (b->rec.width - MeasureText(b->text, textSize)) / 2,
+                b->rec.y + (b->rec.height - textSize) / 2,
+                textSize,
+                WHITE
+            );
+
+
+
+            bool isCurrentlySelected = (CheckCollisionPointRec(GetMousePosition(), b->rec));
+
+            if (isCurrentlySelected && !b->isSelected )
+            {
+                SFXPlay(BUTTON_SELECT, 1, 1, 0);
+            }
+
+            b->isSelected = isCurrentlySelected;
+
+            if (isCurrentlySelected) {
+                DrawRectangleLines(b->rec.x, b->rec.y, b->rec.width, b->rec.height, WHITE);
+                b->color = b->selectionColor;
+                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    SFXPlay(BUTTON_PRESS, 1, 1, 0);
+                    CallCallbacks(POST_BUTTON_CLICK, (void* )b->type);
+                }
+            }
+            else
+            {
+                b->color = b->defaultColor;
+            }
+        }
+    }
+}
+
+void OnStartClick(void* data)
+{
+    ChangeScreen(SCREEN_GAME);
+}
+
+void OnExitClick(void* data)
+{
+    CloseWindow();
+}
+
+void OnRetryClick(void* data)
+{
+    ChangeScreen(SCREEN_GAME);
+    RestartGame();
+}
+
+void OnMenuClick(void* data)
+{
+    ChangeScreen(SCREEN_MENU);
 }

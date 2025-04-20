@@ -308,21 +308,27 @@ void DrawEntities() {
     for (int i = 0; i < count; i++) {
         Entity* entity = sorted[i];
         if (entity != NULL) {
+            Texture2D sprite = entity->data.sprite[entity->randomSpriteIndex];
+            float width = sprite.width * entity->size.x;
+            float height = sprite.height * entity->size.y;
+
+            Rectangle source = { 0, 0, sprite.width, sprite.height };
+
+            entity->rec = (Rectangle){
+                entity->position.x,
+                entity->position.y,
+                width,
+                height
+            };
+
+
+            Vector2 origin = { width / 2 + entity->shakePos.x, width / 2 + entity->shakePos.y};
+
             if (entity->data.type != ENTITY_PLAYER)
             {
-                if (entity->data.sprite[entity->randomSpriteIndex].id > 0)
+                if (sprite.id > 0)
                 {
-                    Rectangle source = { 0, 0, entity->data.sprite[entity->randomSpriteIndex].width, entity->data.sprite[entity->randomSpriteIndex].height };
-                    Rectangle dest = {
-                        entity->position.x,
-                        entity->position.y,
-                        entity->data.sprite[entity->randomSpriteIndex].width * entity->size.x,
-                        entity->data.sprite[entity->randomSpriteIndex].height * entity->size.y
-                    };
-
-                    Vector2 origin = { dest.width / 2 + entity->shakePos.x, dest.height / 2 + entity->shakePos.y};
-
-                    DrawTexturePro(entity->data.sprite[entity->randomSpriteIndex], source, dest, origin, entity->spriteRotation, entity->color);
+                    DrawTexturePro(sprite, source,  entity->rec, origin, entity->spriteRotation, entity->color);
                 }
                 else
                 {
@@ -331,23 +337,21 @@ void DrawEntities() {
             }
             else
             {
-                if (entity->data.toPlayer.iFrames > 0) {
+                float blinkSpeed = 5 + (50 * (1.0f - (entity->data.toPlayer.iFrames / 60.0f)));
+                if (entity->data.toPlayer.iFrames <=0 || entity->data.toPlayer.iFrames > 0 && fmod(entity->data.toPlayer.iFrames, blinkSpeed) < blinkSpeed / 2) {
 
-                    float blinkSpeed = 5 + (50 * (1.0f - (entity->data.toPlayer.iFrames / 60.0f)));
-                    if (fmod(entity->data.toPlayer.iFrames, blinkSpeed) < blinkSpeed / 2) {
-                        DrawRectangleRec(entity->rec, entity->color);
-                    }
-                    }
-                else {
-                    DrawRectangleRec(entity->rec, entity->color);
+                    DrawTexturePro(sprite, source,  entity->rec, origin, entity->spriteRotation, entity->color);
                 }
             }
 
             if (HasDebugFlag(DEBUG_SHOW_HITBOXES))
             {
-                DrawCircleLines(entity->position.x + entity->size.x/2,
-                    entity->position.y+entity->size.y/2,
-                    entity->data.collisionRadius, YELLOW);
+                DrawCircleLines(
+                    entity->position.x + entity->size.x/2,
+                    entity->position.y + entity->size.y/2,
+                    entity->data.collisionRadius, GREEN);
+
+                DrawRectangleLines(entity->rec.x-entity->rec.width/2, entity->rec.y-entity->rec.height/2, entity->rec.width, entity->rec.height, MAROON);
             }
         }
     }

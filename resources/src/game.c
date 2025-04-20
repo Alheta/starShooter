@@ -299,7 +299,19 @@ float DegreeToRadian(float degree) {
     return degree * (3.14159265358979323846f / 180.0f); // Преобразуем в радианы
 }
 
-void OnButtonClick(void* data)
+void RestartGame()
 {
-	SFXPlay(BUTTON_PRESS, 0.55, 1, 0);
+    for (int i = 0; i < MAX_ENTITIES; i++) {
+        Entity* entity = GetGameEntities()[i];
+		if (entity)
+		{
+			if (entity->data.type != ENTITY_PLAYER)
+			{
+				KillEntity(entity);
+			}
+		}
+	}
+
+	InitPlayer();
+	InitSpawner();
 }

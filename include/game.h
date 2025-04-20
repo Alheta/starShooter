@@ -49,6 +49,6 @@ void SpawnerUpdate();
 
 //Другое
 float DegreeToRadian(float degree);
-void  OnButtonClick(void* data);
+void RestartGame();
 
 #endif // GAME_H

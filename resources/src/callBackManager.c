@@ -5,6 +5,7 @@
 #include "entity.h"
 #include "player.h"
 #include "game.h"
+#include "UI.h"
 
 // Массив для хранения зарегистрированных коллбэков
 static CallbackEntry callbacks[MAX_CALLBACKS];
@@ -21,7 +22,6 @@ void AddCallback(CallbackType type, void (*callback)(void*), void* filter_data) 
 }
 
 void CallCallbacks(CallbackType type, void* data) {
-    Entity* entity = (Entity*)data;
 
     for (int i = 0; i < callback_count; i++) {
         if (callbacks[i].type != type) {
@@ -60,6 +60,13 @@ void CallCallbacks(CallbackType type, void* data) {
                 break;
             }
             case POST_BUTTON_CLICK: {
+                ButtonType passedType = (ButtonType)(intptr_t)data;
+                ButtonType excpectedType = (ButtonType)(intptr_t)callbacks[i].filter_data;
+
+                if (passedType != excpectedType) {
+                    shouldSkip = true;
+                    continue;
+                }
                 break;
             }
             default:
@@ -88,7 +95,8 @@ void RegisterAllCallbacks() {
     AddCallback(POST_POWER_UP_REMOVE, OnCoolingRemove, (void*)(intptr_t)SHOOT_COOLING);
     AddCallback(POST_POWER_UP_REMOVE, OnHomingRemove, (void* )(intptr_t)SHOOT_HOMING);
 
-
-    AddCallback(POST_BUTTON_CLICK, OnButtonClick, (void* )0);
-
+    AddCallback(POST_BUTTON_CLICK, OnStartClick, (void*)(intptr_t)BUTTON_START);
+    AddCallback(POST_BUTTON_CLICK, OnExitClick, (void*)(intptr_t)BUTTON_EXIT);
+    AddCallback(POST_BUTTON_CLICK, OnMenuClick, (void*)(intptr_t)BUTTON_MENU);
+    AddCallback(POST_BUTTON_CLICK, OnRetryClick, (void*)(intptr_t)BUTTON_RETRY);
 }
