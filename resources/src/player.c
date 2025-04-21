@@ -34,6 +34,7 @@ void InitPlayer() {
     player->data.toPlayer.iFrames = 0;
     player->data.collisionRadius = 30;
 
+    UnloadTexture(player->data.sprite[0]);
     player->data.sprite[0] = LoadTexture("resources/gfx/player/player.png");
     player->data.sprite[player->randomSpriteIndex].width = player->data.sprite[player->randomSpriteIndex].width * (player->size.x*SPRITE_SCALE);
     player->data.sprite[player->randomSpriteIndex].height = player->data.sprite[player->randomSpriteIndex].height * (player->size.y*SPRITE_SCALE);
