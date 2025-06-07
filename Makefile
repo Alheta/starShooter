@@ -12,7 +12,7 @@ ICON_PATH = config\meta\icon.ico
 CC = gcc
 GFLAGS = -I$(INCLUDE_DIR) -L$(LIB_DIR)
 
-LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
+LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm -mwindows
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)

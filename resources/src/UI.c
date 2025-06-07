@@ -153,6 +153,7 @@ void ButtonRender(ButtonType type, Vector2 position)
 void OnStartClick(void* data)
 {
     ChangeScreen(SCREEN_GAME);
+    RestartGame();
 }
 
 void OnExitClick(void* data)

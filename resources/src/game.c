@@ -137,7 +137,6 @@ Entity** GetGameEntities()
 }
 
 Entity* SpawnEntity(EntityType type, int variant, Vector2 position, Vector2 velocity) {
-    // Найдем сущность по типу и варианту
     for (int i = 0; i < MAX_ENTITIES; i++) {
         if (gameEntities[i] == NULL) {
             Entity* entity = (Entity*)malloc(sizeof(Entity));
@@ -156,6 +155,7 @@ Entity* SpawnEntity(EntityType type, int variant, Vector2 position, Vector2 velo
                 }
             }
 
+            //Назначаем данные сущности
             entity->data.health = entity->data.maxHealth;
             entity->defaultColor = WHITE;
             entity->color = entity->defaultColor;
@@ -277,8 +277,8 @@ void SpawnerUpdate() {
     if (spawner->spawnDelay == 0) {
 
         // Получаем случайного врага из пула
-        int randomEnemy = GetRandomEnemyFromPool();
-        float random_angle = 90.0f + (rand() % 91) - 45.0f;
+        int randomEnemy = GetRandomEnemyFromPool(); 
+        float random_angle = 90.0f + (rand() % 91) - 45.0f; //Случайный угол передвижения объекта 
         float angle_rad = DegreeToRadian(random_angle);
 
         Vector2 velocity;

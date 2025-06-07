@@ -1,4 +1,7 @@
 #include "debug.h"
+#include "entity.h"
+#include "game.h"
+#include "constants.h"
 #include "dataLoader.h"
 #include <stdio.h>
 
@@ -25,6 +28,19 @@ void DebugUpdate()
             AddDebugFlag(DEBUG_SHOW_HITBOXES); }
         else {
             ClearDebugFlag(DEBUG_SHOW_HITBOXES);
+        }
+    }
+    if (IsKeyPressed(KEY_TWO))
+    {
+        for (int i = 0; i < MAX_ENTITIES; i++) {
+            Entity* entity = GetGameEntities()[i];
+            if (entity != NULL) {
+
+                if (entity->data.type == ENTITY_ENEMY)
+                {
+                    TakeDamage(entity, entity->data.health);
+                }
+            }
         }
     }
 }

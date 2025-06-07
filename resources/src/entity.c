@@ -98,29 +98,28 @@ bool IsVulnerableEntity(Entity* entity)
 
 void TakeDamage(Entity* entity, int damage) {
 
-    entity->shakeTimer = 10;
-    entity->flashTimer = 3;
-    switch (entity->data.type)
+    entity->shakeTimer = 10; //Длительность тряски объекта при получении урона
+    entity->flashTimer = 3; //Длительность моргания объекта при получении урона
+    if (entity->data.type == ENTITY_PLAYER)
     {
-        case ENTITY_PLAYER:
-            if (entity->data.toPlayer.iFrames <= 0)
-            {
-                ShakeScreen(0.15, 15);
-                entity->data.health -= damage;
-                entity->data.toPlayer.iFrames = 60;
-                SFXPlay(PLAYER_DAMAGE, 1, 1, 0);
-            }
-            break;
-        default:
+        if (entity->data.toPlayer.iFrames <= 0)
+        {
+            ShakeScreen(0.15, 15);
             entity->data.health -= damage;
-            break;
+            entity->data.toPlayer.iFrames = 60;
+            SFXPlay(PLAYER_DAMAGE, 1, 1, 0);
+        }
+    }
+    else {
+        entity->data.health -= damage;
     }
 
+    //Если после получения урона здоровье объекта < 0 - удаляем объект.
     if (entity->data.health <= 0) {
         if (entity->data.type == ENTITY_ENEMY) {
-            CallCallbacks(POST_ENEMY_DEATH, (void*)entity);  // Передаем entity как void*
-            KillEntity(entity);
-            OnEnemyKill((void*)entity);
+            CallCallbacks(POST_ENEMY_DEATH, (void*)entity); //Запуск точки вызова с коллбэком 
+            KillEntity(entity); //Удаление объекта
+            OnEnemyKill((void*)entity); //Спец. логика после удаления
         } else if (entity->data.type == ENTITY_PLAYER) {
             ChangeScreen(SCREEN_GAMEOVER);
         }

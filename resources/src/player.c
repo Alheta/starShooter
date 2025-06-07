@@ -228,8 +228,6 @@ void UpdatePowerUps() {
     }
 }
 
-// SHOOT FLAGS:
-
 //Начисляет флаг стрельбы игроку
 void AddShootFlag(ShootFlags flag)
 {
